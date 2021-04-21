@@ -27,12 +27,11 @@ include dconf
 
 # -----------------------------------------------------------------------------
 
-cols=${1:-${SETUP_GNOME_TERMINAL_COLS:-180}}; integer "$cols" "COLS"
-rows=${2:-${SETUP_GNOME_TERMINAL_ROWS:-60}};  integer "$rows" "ROWS"
+name=${1:-${SETUP_GNOME_TERMINAL_NAME:-$SETUP_USERNAME}}
+cols=${2:-${SETUP_GNOME_TERMINAL_COLS:-180}}; integer "$cols" "COLS"
+rows=${3:-${SETUP_GNOME_TERMINAL_ROWS:-60}};  integer "$rows" "ROWS"
 
 # -----------------------------------------------------------------------------
-
-name=$SETUP_USERNAME
 
 required=3.8
 version=$(gnome-terminal --version | awk '{print $4}')
