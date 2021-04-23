@@ -11,5 +11,6 @@ gvariant_array() (
 	local itemtype=$2  # List item type: 's' for string, 'u' for uint32, etc
 	local curlist=$3   # Current list, as a string in GVariant format: '@as []'
 	shift 3
-	python3 -- "$(absdir "$BASH_SOURCE")"/gvariant.py "$op" "$itemtype" "$curlist" "$@"
+	python3 -- "$(absdir "$BASH_SOURCE")"/gvariant.py array  \
+		"$op" "$itemtype" "$curlist" "$@"
 )

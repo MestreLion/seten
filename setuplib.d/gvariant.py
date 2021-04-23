@@ -1,21 +1,33 @@
-# Support for gvariant
-# Uses list instead of set to preserve order
+# Support for gvariant library
 #
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
+__all__ = [
+    'array',
+]
+
 import ast
+import os.path
 import sys
 
-TYPES=('s', 'u')
-
-class MyError(ValueError):
-    pass
+TYPES = ('s', 'u')
 
 
-def main(op: str, itemtype: str, strlist: str, *items) -> 'Tuple[str, list]':
+# Exported methods, must have (*args) signature -------------------------------
+
+
+def array(*args):
+    if len(args) < 3:
+        return usage(f"Missing required arguments in {args}",
+                     "OPERATION ITEM_TYPE LIST_STRING [ITEMS...]")
+    itemtype, newlist = _array(*args)
+    print(f'@a{itemtype} {newlist!r}')
+
+
+def _array(op: str, itemtype: str, strlist: str, *items) -> 'Tuple[str, list]':
     if itemtype not in TYPES:
-        raise MyError(f"Not a valid item type {TYPES}: {itemtype}")
+        raise GVariantError(f"Not a supported item type {TYPES}: {itemtype}")
 
     if itemtype == 'u':
         items = list(map(int, items))
@@ -34,28 +46,55 @@ def main(op: str, itemtype: str, strlist: str, *items) -> 'Tuple[str, list]':
     try:
         curlist = ast.literal_eval(strlist)
     except (SyntaxError, ValueError):
-        raise MyError(f"Malformed list literal: {strlist!r}")
+        raise GVariantError(f"Malformed list literal: {strlist!r}")
     if not isinstance(curlist, list):
-        raise MyError(f"Not a list literal: {strlist!r}")
+        raise GVariantError(f"Not a list literal: {strlist!r}")
 
+    # Use list instead of set to preserve order
     if op == 'remove':
         newlist = [_ for _ in curlist if _ not in items]
     elif op == 'include':
         newlist = curlist + [_ for _ in items if _ not in curlist]
     else:
-        raise MyError(f"Not a valid list operation: {op!r}")
+        raise GVariantError(f"Not a valid list operation: {op!r}")
 
     return itemtype, newlist
 
 
+# Dispatching engine -----------------------------------------------------------
+
+class GVariantError(ValueError):
+    def __repr__(self): return str(self)
+
+
+def usage(msg="", sig=""):
+    msg = f"{msg}\n" if msg else ""
+    if sig:
+        sig = f"{sys.argv[1]} {sig}"
+    else:
+        msg = f"{msg}Available methods: {', '.join(__all__)}\n"
+        sig = "METHOD [ARGS...]"
+    return f"{msg}Usage: {os.path.basename(sys.argv[0])} {sig}"
+
+
+# Dispatcher
+def main(argv):
+    if not argv:
+        return usage("Missing required METHOD")
+
+    name, *args = argv
+    if name in ('-h', '--help', 'help'):
+        print(usage())
+        return
+
+    if name not in __all__:
+        # nice try, smartass
+        return usage(f"Invalid method: {name}")
+
+    return globals()[name](*args)
+
+
 try:
-    if len(sys.argv) < 4:
-        raise MyError(f"Missing required arguments in {sys.argv[1:]}.\n"
-            f"Usage: {sys.argv[0]} OPERATION ITEM_TYPE LIST_STRING [ITEMS...]")
-    itemtype, newlist = main(*sys.argv[1:])
-    print(f'@a{itemtype} {newlist!r}')
-    sys.exit()
+    sys.exit(main(sys.argv[1:]))
 except Exception as e:
-    err = str(e) if isinstance(e, MyError) else repr(e)
-    print(f'GVariant error: {err}', file=sys.stderr)
-    sys.exit(1)
+    sys.exit(f'GVariant error: {e!r}')

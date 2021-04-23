@@ -5,16 +5,16 @@
 
 include gvariant
 
-# Wrapper to dconf, automatically invoking setup_run on write
+# Wrapper to dconf, automatically invoking setup_run on write and load,
 # and dispatching to extra commands
 dconf() {
 	cmd=$1
 	shift
 	case "$cmd" in
-	load ) ;&
-	write) setup_run command dconf "$cmd" "$@";;
-	array) dconf_array "$@";;
-	*    ) command dconf "$cmd" "$@";;
+	load  ) ;&
+	write ) setup_run command dconf "$cmd" "$@";;
+	array ) dconf_array "$@";;
+	*     ) command dconf "$cmd" "$@";;
 	esac
 }
 
