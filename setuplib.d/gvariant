@@ -14,3 +14,15 @@ gvariant_array() (
 	python3 -- "$(absdir "$BASH_SOURCE")"/gvariant.py array  \
 		"$op" "$itemtype" "$curlist" "$@"
 )
+
+gvariant_quote() {
+	local value=$1
+	# shortcut for gvariant.py quote "$value"
+	python3 -c 'import sys; print(repr(sys.argv[1]))' "$value"
+}
+
+gvariant_unquote() {
+	local value=$1
+	# No shortcuts, let gvariant.py handle ast.literal_eval() exceptions
+	python3 -- "$(absdir "$BASH_SOURCE")"/gvariant.py unquote "$value"
+}

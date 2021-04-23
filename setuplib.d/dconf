@@ -13,9 +13,22 @@ dconf() {
 	case "$cmd" in
 	load  ) ;&
 	write ) setup_run command dconf "$cmd" "$@";;
+	swrite) dconf_write_string "$@";;
+	sread ) dconf_read_string  "$@";;
 	array ) dconf_array "$@";;
 	*     ) command dconf "$cmd" "$@";;
 	esac
+}
+
+dconf_write_string() {
+	local key=$1
+	local value=$2
+	dconf write "$key" "$(gvariant_quote "$value")"
+}
+
+dconf_read_string() {
+	local key=$1
+	gvariant_unquote "$(dconf read "$key")"
 }
 
 dconf_array() {

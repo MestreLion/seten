@@ -139,6 +139,7 @@ setup_run() {
 #------------------------------------------------------------------------------
 
 exists()  { type "$@" >/dev/null 2>&1; }
+escape()  { printf '%q' "$@"; }
 relpath() { python3 -c 'import sys,os;print(os.path.relpath(*sys.argv[1:]))' "$@"; }
 
 try()     { "$@" 2>/dev/null || :; }
