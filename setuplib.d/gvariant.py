@@ -52,7 +52,11 @@ def array(*args):
     newlist = _array(*args)
     # strictly speaking, GVariant only includes type annotation for empty arrays,
     # but since we're not thoroughly testing each item, add it as safety measure
-    print(f'@a{args[1]} {newlist!r}')  # print(gvariant_repr(newlist, 'a' + args[1]))
+    print(f'{_arrtype(args[1])} {newlist!r}')  # print(gvariant_repr(newlist, 'a' + args[1]))
+
+
+def _arrtype(itemtype):
+    return f'@a{itemtype}'
 
 
 def _array(op: str, itemtype: str, strlist: str, *items) -> list:
@@ -72,11 +76,12 @@ def _array(op: str, itemtype: str, strlist: str, *items) -> list:
         return items
 
     # Type annotation. For empty arrays of strings, '@as []'
+    arrtype = _arrtype(itemtype)
     if strlist.startswith('@'):
         vartype, strlist = strlist.split(' ', 1)
-        if vartype != typeanno:
+        if vartype != arrtype:
             raise GVariantError(f"Array type mismatch: LIST_STRING has {vartype!r},"
-                                f" but ITEM_TYPE implies {annotation!r}")
+                                f" but ITEM_TYPE implies {arrtype!r}")
 
     curlist = parse_repr(strlist, list)  # parse_gvariant(strlist, 'a'+itemtype)
 
