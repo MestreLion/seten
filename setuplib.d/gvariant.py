@@ -4,9 +4,10 @@
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
 __all__ = [
-    'array',
     'quote',
     'unquote',
+    'array',
+    'xarray',
 ]
 
 import ast
@@ -23,7 +24,7 @@ STRINGS  = ('s', 'o', 'g')
 INTEGERS = ('y', 'n', 'q', 'i', 'u', 'x', 't', 'h')
 BASIC_TYPES = {
     'd': float,
-    'b': lambda x: x == 'true'
+    'b': lambda x: x == 'True'
 }
 BASIC_TYPES.update({_: str for _ in STRINGS})
 BASIC_TYPES.update({_: int for _ in INTEGERS})
@@ -32,7 +33,7 @@ BASIC_TYPES.update({_: int for _ in INTEGERS})
 # Exported methods, must have (*args) signature -------------------------------
 
 def quote(*args):
-    """Print the GVariant textual representation of a string"""
+    """Print the GVariant textual representation of a string: repr(STRING)"""
     if not len(args) == 1:
         return usage(f"Missing or extra arguments: {args}", "STRING")
     print(repr(args[0]))  # print(gvariant_repr(args[0], 's'))
@@ -46,9 +47,15 @@ def unquote(*args):
 
 
 def array(*args):
+    """Manipulate a GVariant array given an OPERATION and additional ITEMs
+
+    ITEM must be in its "unquoted" form (think str, not repr). Only atomic,
+    non-container items are supported, such as strings, numbers and booleans.
+    For arrays supporting tuples, arrays and maybes, use xarray().
+    """
     if len(args) < 3:
         return usage(f"Missing required arguments in {args}",
-                     "OPERATION ITEM_TYPE LIST_STRING [ITEMS...]")
+                     "OPERATION ITEM_TYPE ARRAY [ITEM(s)...]")
     newlist = _array(*args)
     # strictly speaking, GVariant only includes type annotation for empty arrays,
     # but since we're not thoroughly testing each item, add it as safety measure
@@ -94,10 +101,46 @@ def _array(op: str, itemtype: str, strlist: str, *items) -> list:
     raise GVariantError(f"Not a valid list operation: {op!r}")
 
 
+def xarray(*args):
+    """Similar to array(), using GLib.Variant to support any item type
+
+    Unlike array() ITEMS must be in repr() format, and there's no ITEM_TYPE parameter
+    """
+    if len(args) < 2:
+        return usage(f"Missing required arguments in {args}",
+                     "OPERATION ARRAY [ITEMREPR(s)...]")
+
+    gvlist = GLib.Variant.parse(None, strlist)
+    vartype = curlist.get_type_string()
+    if not vartype.startswith('a'):
+        raise GVariantError(f"ARRAY_TEXT does not represent an array: {vartype!r}")
+
+    newlist = _xarray(args[0], gvlist, vartype[1:], *args[2:])
+    print(gvariant_repr(newlist, vartype))
+
+
+def _xarray(op: str, gvlist: GLib.GVariant, itemtype: str, *items) -> list:
+    if op in ('clear', 'new'):
+        return []
+
+    items = [parse_gvariant(_, itemtype) for _ in items]
+
+    if op == 'set':
+        return items
+
+    curlist = list(curlist)  # Recursively unpack() children to native python objects
+
+    if op == 'remove':
+        return [_ for _ in curlist if _ not in items]
+
+    elif op == 'include':
+        return curlist + [_ for _ in items if _ not in curlist]
+
+
 # Supporting functions ---------------------------------------------------------
 
 def parse_repr(text, cls=None):
-    """Return a Python builtin object from a literal expression string
+    """Return a Python native object from a literal expression string
 
     Useful for reverting repr(obj) if obj is a Python builtin, as the textual
     representation of all builtins, as given by their repr(), is always a literal
@@ -113,13 +156,14 @@ def parse_repr(text, cls=None):
 
 
 def parse_gvariant(text: str, vartype: str or None = None):
-    """Return a Python builtin object from a GVariant textual representation
+    """Return a Python native object from a GVariant textual representation
 
     To revert, in the general case vartype is reused and must not be None:
     text == str(GLib.Variant(vartype, parse_gvariant(text, vartype)))
         In some cases can be reverted simply by: text == repr(parse_gvariant(text))
 
     GVariant mini-reference:
+    https://github.com/GNOME/pygobject/blob/master/gi/overrides/GLib.py
 
     GLib.Variant(type: str, value: object) -> GLib.Variant
         - type must not be falsy and is not inferred from object
@@ -146,7 +190,8 @@ def parse_gvariant(text: str, vartype: str or None = None):
     else:
         vartype = None  # covers the case when vartype is empty string
 
-    return parse_repr(GLib.Variant.parse(vartype, text).print_(False))
+    gvariant = GLib.Variant.parse(vartype, text)
+    return gvariant.unpack()  # parse_repr(gvariant.print_(False))
 
 
 def gvariant_repr(obj: object, vartype: str):
