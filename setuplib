@@ -54,6 +54,7 @@ fi
 username() { getent passwd "${1:-$USER}" | cut -d: -f5 | cut -d, -f1; }
 absdir() { dirname "$(readlink -f "$1")"; }
 
+# See README's FAQ on why the vars are named SETUP_* instead of SETEN_*
 # Keep in sync with seten.template.conf and bootstrap.sh!
 slug=${SETUP_SLUG:-}; slug=${slug##*/}; SETUP_SLUG=${slug:-'seten'}; unset slug
 SETUP_VERBOSE=${SETUP_VERBOSE:-1}

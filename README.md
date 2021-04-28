@@ -39,3 +39,23 @@ bash <(wget -qO- https://github.com/MestreLion/seten/raw/main/bootstrap.sh)
 
 See the [available installers](setup) for more information.
 The [libraries](setuplib.d) might be worth taking a look too.
+
+---
+
+FAQ
+---
+*Questions no one really ever asked, but serve as a self-reminder of some of my design decisions*
+
+- Why all the environment variables are prefixed as `SETUP_` and not `SETEN_`?
+  - Historical reasons. Before being an independent project, *Seten* was merely a `setup/`
+    subdirectory of my [personal scripts](https://github.com/MestreLion/scripts), hence
+    the prefix. I'm too lazy for a mass-rename that will produce a noisy git diff for
+    little gain, since all but one of these vars are only used internally, or maybe
+    referenced in the config file, but not as actual environment variables.
+
+- What about `SETEN_CONFIG`?
+  - See the *“all but one”* in the above answer? Well, that exception is `SETEN_CONFIG`,
+    the path of the config file. Being the only setting that cannot be set in the
+    config file, by definition, it must be set as an environmental variable, possibly
+    in `~/.profile`. As such it had to be properly prefixed with an easily recognizable,
+    distinguished namespace.
