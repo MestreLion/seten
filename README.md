@@ -16,11 +16,11 @@ Perfect for automatically installing and configuring software that:
   - Is it a vendor repository to be added to at `sources.list.d/`? GPG Keys?
   - Built from source? Ok, but `wget -O- ... | tar x ...` or `git clone ...`?
     Then `./configure && make && make install` or `cmake`?
-  - You get the idea: every time you see *"Installation Instructions"* in a
+  - You get the idea: every time you see *“Installation Instructions”* in a
     software's website or GitHub page, save those instructions as a setup script.
 
-- You have lots of settings you want to customize, and it's very tedious and not
-  very reproducible to do so using its GUI. Be it a simple Gnome app such as Gedit
+- You have lots of settings you want to customize, and it is tedious and not
+  reproducible to do so using its GUI. Be it a simple Gnome app such as Gedit
   and Nautilus, or your complex NGINX reverse proxying to Apache setup.
 
 ---

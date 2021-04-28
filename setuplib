@@ -16,9 +16,11 @@ usage() {
 	local error=${1:-0}
 	local usage="Usage: ${0##*/}${ARGS:+" ${ARGS}"}"
 	if ((error)); then
-		echo "$usage" >&2; exit "$error"
+		echo "$usage" >&2
+		exit "$error"
 	else
-		echo -e "${DESCRIPTION:+"${DESCRIPTION}\\n"}${usage}"; exit
+		echo -e "${DESCRIPTION:+"${DESCRIPTION}\\n"}${usage}"
+		exit
 	fi
 }
 
@@ -29,19 +31,26 @@ for arg in "$@"; do
 done
 unset arg
 
+# Handy XDG vars with their defaults
 CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
+# shellcheck disable=SC2034
 DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
+# shellcheck disable=SC2034
 BIN_HOME=${XDG_BIN_HOME:-"$HOME/.local/bin"}  # Not official, but widely used
 
 # Source the config file, silently ignore if it does not exist
 SETUP_CONFIG=${1:-${SETUP_CONFIG:-"${CONFIG_HOME}/setup/setup.conf"}}
-if [[ -r "$SETUP_CONFIG" ]]; then source "$SETUP_CONFIG"; fi
+if [[ -r "$SETUP_CONFIG" ]]; then
+	# shellcheck source=seten.template.conf
+	source "$SETUP_CONFIG"
+fi
 
 #------------------------------------------------------------------------------
 # Setup engine
 
-absdir() { dirname "$(readlink -f "$1")"; }
+# shellcheck disable=SC2120
 username() { getent passwd "${1:-$USER}" | cut -d: -f5 | cut -d, -f1; }
+absdir() { dirname "$(readlink -f "$1")"; }
 
 slug=${SETUP_SLUG:-}; slug=${slug##*/}; SETUP_SLUG=${slug:-'setup'}; unset slug
 SETUP_VERBOSE=${SETUP_VERBOSE:-1}
@@ -49,7 +58,7 @@ SETUP_DEBUG=${SETUP_DEBUG:-0}
 SETUP_DRYRUN=${SETUP_DRYRUN:-0}
 SETUP_USER=${SETUP_USER:-${USER,,}}
 SETUP_USERNAME=${SETUP_USERNAME:-$(username)}
-SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "$BASH_SOURCE")/setuplib.d"}
+SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/setuplib.d"}
 
 # DEPRECATED! Use setup_run() directly.
 if ((SETUP_DRYRUN)); then
@@ -102,7 +111,8 @@ is_desktop_environment() (
 	if [[ -z "$de" ]]; then if [[ "$DEs" ]]; then return; else return 1; fi; fi
 
 	# Lowercase both
-	de=${de,,}; DEs=${DEs,,}
+	de=${de,,}
+	DEs=${DEs,,}
 
 	# Check de against each DEs component
 	IFS=:; for DE in $DEs; do if [[ "$de" == "$DE" ]]; then return; fi; done
@@ -110,8 +120,6 @@ is_desktop_environment() (
 	# Not found
 	return 1
 )
-
-is_desktop_environment
 
 #------------------------------------------------------------------------------
 
@@ -124,6 +132,7 @@ include() {
 		if ! [[ -f "$lib" && -r "$lib" ]]; then
 			fatal "Library not accessible: ${lib}"
 		fi
+		# shellcheck source=setup/template
 		source "$lib"
 	done
 }
@@ -156,7 +165,7 @@ message() { if ((SETUP_VERBOSE)); then green    "* $*";     fi; }
 debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
-argument(){
+argument() {
 	if ! [[ "${1:-}" ]]; then
 		echo "Missing required argument${2:+" ${2}"}" >&2
 		usage 1
@@ -240,7 +249,7 @@ install_package() {
 	local pkg=
 	local pkgs=()
 	for pkg in "$@"; do
-		if ! package_installed "$pkg"; then pkgs+=( "$pkg" ); fi
+		if ! package_installed "$pkg"; then pkgs+=("$pkg"); fi
 	done
 	if (("${#pkgs[@]}")); then
 		$SETUP_RUN sudo apt install -y "${pkgs[@]}"
@@ -256,7 +265,7 @@ package_remove() {
 	local pkg=
 	local pkgs=()
 	for pkg in "$@"; do
-		if package_installed "$pkg"; then pkgs+=( "$pkg" ); fi
+		if package_installed "$pkg"; then pkgs+=("$pkg"); fi
 	done
 	if (("${#pkgs[@]}")); then
 		$SETUP_RUN sudo apt remove -y "${pkgs[@]}"
