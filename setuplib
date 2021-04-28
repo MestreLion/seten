@@ -39,10 +39,12 @@ DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
 BIN_HOME=${XDG_BIN_HOME:-"$HOME/.local/bin"}  # Not official, but widely used
 
 # Source the config file, silently ignore if it does not exist
-SETUP_CONFIG=${1:-${SETUP_CONFIG:-"${CONFIG_HOME}/setup/setup.conf"}}
-if [[ -r "$SETUP_CONFIG" ]]; then
+# Factory default path is intentionally not affected by SETUP_SLUG
+# Keep it in sync with bootstrap.sh!
+SETEN_CONFIG=${1:-${SETEN_CONFIG:-"${CONFIG_HOME}/seten/seten.conf"}}
+if [[ -r "$SETEN_CONFIG" ]]; then
 	# shellcheck source=seten.template.conf
-	source "$SETUP_CONFIG"
+	source "$SETEN_CONFIG"
 fi
 
 #------------------------------------------------------------------------------
@@ -52,7 +54,8 @@ fi
 username() { getent passwd "${1:-$USER}" | cut -d: -f5 | cut -d, -f1; }
 absdir() { dirname "$(readlink -f "$1")"; }
 
-slug=${SETUP_SLUG:-}; slug=${slug##*/}; SETUP_SLUG=${slug:-'setup'}; unset slug
+# Keep in sync with seten.template.conf and bootstrap.sh!
+slug=${SETUP_SLUG:-}; slug=${slug##*/}; SETUP_SLUG=${slug:-'seten'}; unset slug
 SETUP_VERBOSE=${SETUP_VERBOSE:-1}
 SETUP_DEBUG=${SETUP_DEBUG:-0}
 SETUP_DRYRUN=${SETUP_DRYRUN:-0}
