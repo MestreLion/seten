@@ -62,8 +62,12 @@ fi
 install -- "$mydir"/setup "${execdir}/${SETUP_SLUG}"
 
 mkdir -p -- "$bashcompdir"
-awk -v SETUP_SLUG="$SETUP_SLUG" -v SETUP_DIR="$SETUP_DIR" '{
-	sub("@@SETUP_SLUG@@", $SETUP_SLUG)
-	sub("@@SETUP_DIR@@",  $SETUP_DIR)
-	print
-}' "$mydir"/setup.bash-completion.in > "${bashcompdir}/${SETUP_SLUG}"
+awk \
+	-v SETUP_SLUG="$(printf '%q' "$SETUP_SLUG")" \
+	-v SETUP_DIR="$( printf '%q' "$SETUP_DIR")"  \
+	'{
+		sub("@@SETUP_SLUG@@", $SETUP_SLUG)
+		sub("@@SETUP_DIR@@",  $SETUP_DIR)
+		print
+	}' \
+	"$mydir"/setup.bash-completion.in > "${bashcompdir}/${SETUP_SLUG}"
