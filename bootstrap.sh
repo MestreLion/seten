@@ -9,7 +9,7 @@
 # - Install git from distribution repositories
 # - Clone project git repository, by default from Github
 # - Force-update the local git repository
-# - Run the installer `config.sh`
+# - Run the installer `install.sh`
 #
 # Instructions:
 # - Copy any pre-made configuration file to ~/.config/seten/seten.conf
@@ -25,7 +25,7 @@ set -Eeuo pipefail  # exit on any error
 trap '>&2 echo "error: line $LINENO, status $?: $BASH_COMMAND"' ERR
 
 #------------------------------------------------------------------------------
-# Factory defaults, copied from setuplib since boostrap can't source it
+# Factory defaults, most copied from setuplib since boostrap can't source it
 # Keep both files in sync, specially regarding SETEN_CONFIG and SETUP_SLUG!
 
 confdir=${XDG_CONFIG_HOME:-"$HOME/.config"}
@@ -41,9 +41,11 @@ fi
 
 # All settings below can be changed in the config file
 slug=${SETUP_SLUG:-}; slug=${slug##*/}; slug=${slug:-'seten'}
-dir=${SETUP_DIR:-"${datadir}/${slug}"}
-repo=${SETUP_REPO:-"https://github.com/MestreLion/seten.git"}
 verbose=${SETUP_VERBOSE:-1}
+
+# Bootstrap-only settings
+repo=${SETUP_REPO:-"https://github.com/MestreLion/seten.git"}
+dir=${SETUP_DIR:-"${datadir}/${slug}"}
 
 #------------------------------------------------------------------------------
 
@@ -79,4 +81,4 @@ else
 	git clone -- "$repo" "$dir"
 fi
 
-exec "$dir"/config.sh
+exec "$dir"/install.sh

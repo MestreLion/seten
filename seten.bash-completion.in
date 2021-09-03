@@ -1,0 +1,21 @@
+# Bash completion for Seten
+# https://github.com/MestreLion/setup
+#
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later, at your choice. See <http://www.gnu.org/licenses/gpl>
+#
+# Source in your current shell or install at:
+# ~/.local/share/bash-completion/completions/@@SETUP_SLUG@@
+#
+###############################################################################
+
+_seten_setup() {
+	local cur prev words cword
+	_init_completion || return
+
+	local SETUP_DIR=@@SETUP_DIR@@
+
+	COMPREPLY=($(compgen -W \
+		'$(command ls "$SETUP_DIR"/setup.d 2>/dev/null)' -- $cur))
+} &&
+	complete -F _seten_setup @@SETUP_SLUG@@

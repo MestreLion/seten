@@ -57,8 +57,10 @@ absdir() { dirname "$(readlink -f "$1")"; }
 # See README's FAQ on why the vars are named SETUP_* instead of SETEN_*
 # Keep in sync with seten.template.conf and bootstrap.sh!
 slug=${SETUP_SLUG:-}; slug=${slug##*/}; SETUP_SLUG=${slug:-'seten'}; unset slug
+SETUP_NAME=${SETUP_NAME:-'Seten'}
 SETUP_VERBOSE=${SETUP_VERBOSE:-1}
 SETUP_DEBUG=${SETUP_DEBUG:-0}
+SETUP_INTERACTIVE=${SETUP_INTERACTIVE:-1}
 SETUP_DRYRUN=${SETUP_DRYRUN:-0}
 SETUP_USER=${SETUP_USER:-${USER,,}}
 SETUP_USERNAME=${SETUP_USERNAME:-$(username)}
