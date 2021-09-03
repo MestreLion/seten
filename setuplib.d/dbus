@@ -3,7 +3,6 @@
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
-
 dbus_call() {
 	local method=$1
 	local path=$2

@@ -24,7 +24,7 @@ gsettings_array() {
 	local type=$4    # List item type. See gvariant_array()
 	shift 4          # Remaining arguments are list items
 
-	local list=$(gsettings get "$schema" "$key")
+	local list; list=$(gsettings get "$schema" "$key")
 	list=$(gvariant_array "$op" "$type" "$list" "$@")
 	gsettings set "$schema" "$key" "$list"
 }

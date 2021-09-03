@@ -20,7 +20,7 @@ except ImportError:
     GLib = None
 
 
-STRINGS  = ('s', 'o', 'g')
+STRINGS = ('s', 'o', 'g')
 INTEGERS = ('y', 'n', 'q', 'i', 'u', 'x', 't', 'h')
 BASIC_TYPES = {
     'd': float,
@@ -104,14 +104,18 @@ def _array(op: str, itemtype: str, strlist: str, *items) -> list:
 def xarray(*args):
     """Similar to array(), using GLib.Variant to support any item type
 
-    Unlike array() ITEMS must be in repr() format, and there's no ITEM_TYPE parameter
+    Unlike array() ITEMS must be in repr() format and there's no ITEM_TYPE parameter
     """
     if len(args) < 2:
         return usage(f"Missing required arguments in {args}",
                      "OPERATION ARRAY [ITEMREPR(s)...]")
 
-    gvlist = GLib.Variant.parse(None, strlist)
-    vartype = curlist.get_type_string()
+    if not GLib:
+        raise GVariantError(f"Support for parsing GVariants"
+                            " requires Python GLib bindings")
+
+    gvlist = GLib.Variant.parse(None, args[1])
+    vartype = gvlist.get_type_string()
     if not vartype.startswith('a'):
         raise GVariantError(f"ARRAY_TEXT does not represent an array: {vartype!r}")
 
@@ -128,7 +132,7 @@ def _xarray(op: str, gvlist: GLib.GVariant, itemtype: str, *items) -> list:
     if op == 'set':
         return items
 
-    curlist = list(curlist)  # Recursively unpack() children to native python objects
+    curlist = list(gvlist)  # Recursively unpack() children to native python objects
 
     if op == 'remove':
         return [_ for _ in curlist if _ not in items]
