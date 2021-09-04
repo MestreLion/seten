@@ -38,14 +38,28 @@ DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
 # shellcheck disable=SC2034
 BIN_HOME=${XDG_BIN_HOME:-"$HOME/.local/bin"}  # Not official, but widely used
 
-# Source the config file, silently ignore if it does not exist
-# Factory default path is intentionally not affected by SETUP_SLUG
+# Set and source the config file, silently ignoring if it does not exist
+# Factory default is intentionally not affected by SETUP_SLUG
 # Keep it in sync with bootstrap.sh!
 SETEN_CONFIG=${1:-${SETEN_CONFIG:-"${CONFIG_HOME}/seten/seten.conf"}}
-if [[ -r "$SETEN_CONFIG" ]]; then
-	# shellcheck source=seten.template.conf
-	source "$SETEN_CONFIG"
-fi
+include-config() {
+	local config
+	for config in "$@"; do
+		if [[ -d "$config" ]]; then
+			include-config "$config"/*{.conf,/}
+		fi
+
+		if ! [[ -f "$config" && -r "$config" ]]; then
+			continue
+		fi
+
+		pushd "$(dirname "$config")"
+		# shellcheck source=seten.template.conf
+		source "$config"
+		popd
+	done
+}
+include-config "$SETEN_CONFIG"
 
 #------------------------------------------------------------------------------
 # Setup engine
@@ -114,7 +128,7 @@ is_desktop_environment() (
 	local de=${1:-}
 	local DEs=${XDG_CURRENT_DESKTOP:-}
 
-	# Shortcut: If de is empty, check if empty DEs
+	# Shortcut: If "$de" is empty, check if empty DEs
 	if [[ -z "$de" ]]; then if [[ "$DEs" ]]; then return; else return 1; fi; fi
 
 	# Lowercase both

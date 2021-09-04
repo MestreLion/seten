@@ -49,14 +49,14 @@ fi
 if ((SETUP_INTERACTIVE)); then
 	while true; do
 		editor "$SETEN_CONFIG"
-		# shellcheck source=seten.template.conf
-		source "$SETEN_CONFIG"
+		# shellcheck source=setuplib
+		source "$setuplib"
 		show_settings
 		if confirm "Proceed with those settings?"; then break; fi
 	done
 else
-	# shellcheck source=seten.template.conf
-	source "$SETEN_CONFIG"
+	# shellcheck source=setuplib
+	source "$setuplib"
 fi
 
 install -- "$mydir"/setup "${execdir}/${SETUP_SLUG}"

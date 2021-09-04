@@ -28,16 +28,31 @@ trap '>&2 echo "error: line $LINENO, status $?: $BASH_COMMAND"' ERR
 # Factory defaults, most copied from setuplib since boostrap can't source it
 # Keep both files in sync, specially regarding SETEN_CONFIG and SETUP_SLUG!
 
-confdir=${XDG_CONFIG_HOME:-"$HOME/.config"}
-datadir=${XDG_DATA_HOME:-"$HOME/.local/share"}
+# Handy XDG vars with their defaults
+CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
+DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
 
 # Config file factory default path, intentionally not affected by SETUP_SLUG
-defaultconf="${confdir}/seten/seten.conf"
+defaultconf="${CONFIG_HOME}/seten/seten.conf"
 export SETEN_CONFIG=${1:-${SETEN_CONFIG:-${defaultconf}}}
-if [[ -r "$SETEN_CONFIG" ]]; then
-	# shellcheck source=seten.template.conf
-	source "$SETEN_CONFIG"
-fi
+include-config() {
+	local config
+	for config in "$@"; do
+		if [[ -d "$config" ]]; then
+			include-config "$config"/*{.conf,/}
+		fi
+
+		if ! [[ -f "$config" && -r "$config" ]]; then
+			continue
+		fi
+
+		pushd "$(dirname "$config")"
+		# shellcheck source=seten.template.conf
+		source "$config"
+		popd
+	done
+}
+include-config "$SETEN_CONFIG"
 
 # All settings below can be changed in the config file
 slug=${SETUP_SLUG:-}; slug=${slug##*/}; slug=${slug:-'seten'}
@@ -45,7 +60,7 @@ verbose=${SETUP_VERBOSE:-1}
 
 # Bootstrap-only settings
 repo=${SETUP_REPO:-"https://github.com/MestreLion/seten.git"}
-dir=${SETUP_DIR:-"${datadir}/${slug}"}
+dir=${SETUP_DIR:-"${DATA_HOME}/${slug}"}
 
 #------------------------------------------------------------------------------
 
