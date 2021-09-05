@@ -12,6 +12,7 @@ DESCRIPTION='Gedit plugins and preferences'
 ARGS='[MAX_RECENTS]'
 
 setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
 if [[ -r "$setuplib" ]]; then source "$setuplib"; else
 	echo "Setup library not found: $setuplib" >&2; exit 1;
 fi
