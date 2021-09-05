@@ -1,3 +1,6 @@
 # Foobar2000 snap
 # RetroArch / Libretro
 # Notepadqq
+
+# Módulo de Segurança BB
+# Zoom
