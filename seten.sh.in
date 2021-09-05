@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# Main Seten Setup launcher
+#
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later, at your choice. See <http://www.gnu.org/licenses/gpl>
+###############################################################################
+
+SETUP_DIR=@@SETUP_DIR@@
+
+# Adapted from setup/template
+DESCRIPTION='Setup Engine Launcher'
+setuplib=${SETUP_LIB_PATH:-"$SETUP_DIR"/setuplib}
+if [[ -r "$setuplib" ]]; then
+	# shellcheck source=setuplib
+	source "$setuplib"
+else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+#------------------------------------------------------------------------------
+
+# abort, continue. Add 'ask'?
+batch_error=${SETUP_BATCH_ERROR:-"abort"}; argument "$batch_error" BATCH_ERROR
+
+#------------------------------------------------------------------------------
+
+setupdir=$SETUP_DIR/setup  # keep in sync with bash-completion!
+basenames=("$@")
+
+#------------------------------------------------------------------------------
+
+header()  { if ((SETUP_VERBOSE)); then try tput smul; blue "$@"; fi; }
+runmsg()  { if ((SETUP_VERBOSE)); then blue  "*** $*"; fi; }
+
+#------------------------------------------------------------------------------
+
+debugvar setupdir
+
+header 'Setup Engine'
+message "Config file: ${SETEN_CONFIG}"
+message "Jobs to run: ${basenames[*]}"
+status=0
+for job in "${basenames[@]}"; do
+	setup=$setupdir/$job
+	if [[ ! -x "$setup" ]]; then continue; fi
+
+	runmsg "$setup"  # maybe use $job instead of full path $setup?
+	if "$setup"; then continue; else status=$?; fi
+
+	# Error handling
+	case "${batch_error,,}" in
+	abort);;
+	continue) status=1; continue;;
+	*) error "invalid SETUP_BATCH_ERROR value: $SETUP_BATCH_ERROR";;
+	esac
+
+	warning 'aborting remaining jobs'
+	exit $status
+done
+if ((status)); then
+	message "Done, but errors occured"
+	exit $status
+fi
+message "Done!"

@@ -12,15 +12,10 @@
 #
 ###############################################################################
 
-set -Eeuo pipefail  # exit on any error
-trap '>&2 echo "error: line $LINENO, status $?: $BASH_COMMAND"' ERR
-
-#------------------------------------------------------------------------------
-
 DESCRIPTION='Setup Configuration'
 
 mydir=$(dirname "$(readlink -f "$0")")
-setuplib="${mydir}/setuplib"
+setuplib=${SETUP_LIB_PATH:-"$mydir"/setuplib}
 if [[ -r "$setuplib" ]]; then
 	# shellcheck source=setuplib
 	source "$setuplib"
@@ -59,12 +54,23 @@ else
 	source "$setuplib"
 fi
 
-install -- "$mydir"/setup "${execdir}/${SETUP_SLUG}"
+# SETUP_DIR is intentionally set to $mydir here and (indirectly) in setuplib
+# Hardcode it in seten.sh.in and seten.bash-completion.in
+# Only bootstrap.sh read it from config file.
+
+mkdir -p -- "$execdir"
+awk \
+	-v SETUP_DIR="$(printf '%q' "$mydir")"  \
+	'{
+		sub("@@SETUP_DIR@@", $SETUP_DIR)
+		print
+	}' \
+	"$mydir"/seten.sh.in > "${execdir}/${SETUP_SLUG}"
 
 mkdir -p -- "$bashcompdir"
 awk \
+	-v SETUP_DIR="$( printf '%q' "$mydir")"      \
 	-v SETUP_SLUG="$(printf '%q' "$SETUP_SLUG")" \
-	-v SETUP_DIR="$( printf '%q' "$SETUP_DIR")"  \
 	'{
 		sub("@@SETUP_SLUG@@", $SETUP_SLUG)
 		sub("@@SETUP_DIR@@",  $SETUP_DIR)
