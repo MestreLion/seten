@@ -25,4 +25,3 @@
 #Then fix msxml6 (thanks Richard W. @ liberiangeek.net)
 
 #Finally install env WINEARCH=win32 WINEPREFIX=~/.wine32 wine setup.exe
-

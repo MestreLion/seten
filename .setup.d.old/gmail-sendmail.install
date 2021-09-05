@@ -44,7 +44,7 @@ sudo tee /etc/aliases >/dev/null <<-EOF
 	root: root.${FROM}
 	${USER}: ${USER}.${FROM}
 	default: system.${FROM}
-	
+
 	#mailer-daemon: postmaster@
 	#postmaster: root@
 	#nobody: root@

@@ -4,7 +4,7 @@ Setup Library Extensions
 Directory for Bash libraries to extend [`setuplib`](../setuplib) functionality.
 
 - Files here are sourced on-demand by [`setuplib`](../setuplib) on `include()`
-  - It source files at `SETUP_LIB_DIR`, by default at `$(dirname setuplib)/setuplib.d`
+  - It sources files at `SETUP_LIBS_DIR`, by default at `$(dirname setuplib)/lib`
 
 - All function names **must** be prefixed to match the file name. Absolutely no exceptions!
   - Makes it possible to track where a given function was defined. As a bonus it avoids collisions.

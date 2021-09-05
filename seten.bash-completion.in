@@ -19,6 +19,7 @@ _seten_setup() {
 
 	# shellcheck disable=SC2016,SC2207,SC2086
 	COMPREPLY=($(compgen -W \
-		'$(command ls "$SETUP_DIR"/setup 2>/dev/null)' -- $cur))
+		'$(command ls -I "*.*" -I template "$SETUP_DIR"/setup.d/*)' \
+		-- $cur))
 } &&
 	complete -F _seten_setup @@SETUP_SLUG@@

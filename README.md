@@ -37,8 +37,8 @@ bash <(wget -qO- https://github.com/MestreLion/seten/raw/main/bootstrap.sh)
 
 - Have fun!
 
-See the [available installers](setup) for more information.
-The [libraries](setuplib.d) might be worth taking a look too.
+See the [available installers](setup.d) for more information.
+The [libraries](lib) might be worth taking a look too.
 
 ---
 

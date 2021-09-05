@@ -39,7 +39,7 @@ if (( "$(ulimit -Hn)" < "$limit" )); then
 		if ! [[ -f "$bak" ]]; then
 			$SETUP_RUN sudo cp -- "$conf" "$bak"
 			$SETUP_RUN sudo tee -a -- "$conf" <<-EOF
-			
+
 			#@@ Esync support, added by Lutris Install
 			DefaultLimitNOFILE=$limit
 			EOF

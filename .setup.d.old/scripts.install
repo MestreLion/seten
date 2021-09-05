@@ -61,7 +61,7 @@ if ! grep -q "\$SCRIPTS" "$HOME"/.profile 2>/dev/null ; then
 		@@ -8,6 +8,12 @@
 		 # for ssh logins, install and configure the libpam-umask package.
 		 #umask 022
-		 
+
 		+# Added by $myname
 		+export SCRIPTS=${SCRIPTS/$HOME/\$HOME}
 		+if [ -f "\$SCRIPTS/home/profile" ] ; then

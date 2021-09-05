@@ -31,5 +31,3 @@ sudo make dkms
 sudo modprobe "$module"
 
 echo "$module" | sudo tee /etc/modules-load.d/"$module".conf
-
-

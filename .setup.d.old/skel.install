@@ -57,5 +57,3 @@ for folder in "${folders[@]}"; do
 	$SETUP_RUN mkdir -p -- "$(dirname "$dest")"
 	$SETUP_RUN cp --verbose --archive -- "$source" "$dest"
 done
-
-

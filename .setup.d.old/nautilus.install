@@ -11,4 +11,3 @@ gsrootpath=org.gnome.nautilus
 gsettings set "$gsrootpath".preferences   default-folder-viewer  'list-view'
 gsettings set "$gsrootpath".preferences   date-format            'iso'
 gsettings set "$gsrootpath".window-state  start-with-status-bar  true
-

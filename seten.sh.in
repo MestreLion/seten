@@ -8,7 +8,7 @@
 
 SETUP_DIR=@@SETUP_DIR@@
 
-# Adapted from setup/template
+# Adapted from setup.d/template
 DESCRIPTION='Setup Engine Launcher'
 ARGS='JOB(s)...'
 setuplib=${SETUP_LIB_PATH:-"$SETUP_DIR"/setuplib}
@@ -26,7 +26,7 @@ batch_error=${SETUP_BATCH_ERROR:-"abort"}; argument "$batch_error" BATCH_ERROR
 
 #------------------------------------------------------------------------------
 
-setupdir=$SETUP_DIR/setup  # keep in sync with bash-completion!
+setupdir=$SETUP_DIR/setup.d  # keep in sync with bash-completion!
 basenames=("$@")
 
 #------------------------------------------------------------------------------

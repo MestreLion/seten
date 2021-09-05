@@ -3,7 +3,7 @@
 # Copyright (C) 2015 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 #
-# Use setup/template to create new setup scripts
+# Use setup.d/template to create new setup scripts
 #------------------------------------------------------------------------------
 
 set -Eeuo pipefail  # exit on any error
@@ -14,6 +14,7 @@ trap '>&2 echo "error: line $LINENO, status $?: $BASH_COMMAND"' ERR
 usage() {
 	# Calling scripts are expected to set DESCRIPTION and ARGS
 	local error=${1:-0}
+	# shellcheck disable=SC2153
 	local usage="Usage: ${0##*/}${ARGS:+" ${ARGS}"}"
 	if ((error)); then
 		echo "$usage" >&2
@@ -79,7 +80,7 @@ SETUP_INTERACTIVE=${SETUP_INTERACTIVE:-1}
 SETUP_DRYRUN=${SETUP_DRYRUN:-0}
 SETUP_USER=${SETUP_USER:-${USER,,}}
 SETUP_USERNAME=${SETUP_USERNAME:-$(username)}
-SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/setuplib.d"}
+SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/lib"}
 
 #------------------------------------------------------------------------------
 # Platform info
@@ -146,7 +147,7 @@ include() {
 		if ! [[ -f "$lib" && -r "$lib" ]]; then
 			fatal "Library not accessible: ${lib}"
 		fi
-		# shellcheck source=setup/template
+		# shellcheck source=lib/dbus  # any lib will do
 		source "$lib"
 	done
 }
