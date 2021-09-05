@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+sudo apt install cmake g++ pkg-config
+sudo apt install libgraphicsmagick++-dev libturbojpeg-dev libexif-dev libswscale-dev libpng-dev # needed libs
+
+# If you want to include video decoding, also install these additional libraries
+#sudo apt install libavcodec-dev libavformat-dev
+#sudo apt install libavdevice-dev # If you want to read from video devices such as v4l2
+#sudo apt install libopenslide-dev # If you want to add OpenSlide images support
+
+sudo apt install pandoc  # If you want to recreate the man page
+
+repodir=$(mktemp -d)
+# TRAP!!!
+git clone https://github.com/hzeller/timg "$repodir"
+cd "$repodir"  # Enter the checked out repository directory.
+mkdir build  # Generate a dedicated build directory.
+cd build
+# WITH_VIDEO_DECODING enables video;
+# WITH_VIDEO_DEVICE reading from webcam
+# WITH_OPENSLIDE_SUPPORT enables support to OpenSlide images
+cmake ..  \
+	-DWITH_VIDEO_DECODING=Off     \
+	-DWITH_VIDEO_DEVICE=Off       \
+	-DWITH_OPENSLIDE_SUPPORT=Off  \
+	-DCMAKE_INSTALL_PREFIX="$HOME"/.local
+make
+make install

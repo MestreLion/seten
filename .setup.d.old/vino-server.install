@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Enable Vino VNC Server (screen sharing / remote desktop)'
+ARGS='[PASSWORD]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+include nm gsettings dconf
+
+# -----------------------------------------------------------------------------
+
+# Plaintext password defaults to username
+# Encoded password is base64, takes precedence over plaintext
+# Both are truncated to 8-characters (after decoding)
+txtpass=${SETUP_VNC_PLAIN_PASSWORD:-$USER}  # You *really* want to change this default!
+encpass=${SETUP_VNC_ENCODED_PASSWORD:-}
+prompt=${SETUP_VINO_PROMPT:-1}
+
+# -----------------------------------------------------------------------------
+# Input/Environment handling
+
+# Small sanity check
+if ! is_desktop_environment unity; then
+	fatal "Unsupported Desktop Environment: ${SETUP_DESKTOP}"
+fi
+
+# Truncate password to 8 characters and (re-)encode
+if [[ "$encpass" ]]; then
+	txtpass=$(echo -n "$encpass" | base64 -di)
+fi
+if ((${#txtpass} > 8)); then
+	warning "VNC password too long, truncating to 8 characters"
+fi
+password=$(echo -n "${txtpass::8}" | base64)
+
+
+# -----------------------------------------------------------------------------
+# Configure
+
+# Allow control
+gsettings set org.gnome.Vino  view-only  false
+
+# UI automatically switches to Prompt if password is blank
+if ((prompt)) || [[ -z "$password" ]]; then
+	# New connections must ask for access
+	gsettings list set org.gnome.Vino  authentication-methods  s none
+	gsettings      set org.gnome.Vino  prompt-enabled          true
+else
+	# Require a password
+	gsettings      set org.gnome.Vino  prompt-enabled          false
+	gsettings list set org.gnome.Vino  authentication-methods  s vnc
+fi
+
+# Password
+# Leave it set regardless if required or not
+# Don't clear password if disabling or changing to Prompt
+gsettings set org.gnome.Vino  vnc-password  "$password"
+
+# Possibly irrelevant, but `dconf watch` keep buzzing about this
+gsettings set org.gnome.desktop.interface  enable-animations  true
+
+# Other settings to consider:
+# gsettings set org.gnome.Vino  notify-on-connect  false
+# gsettings set org.gnome.Vino  use-upnp           true
+# gsettings set org.gnome.Vino  icon-visibility    'never'  # 'client', 'always'
+
+
+# -----------------------------------------------------------------------------
+# Enable
+
+# TODO: In non-Ubuntu (or non-Unity) distros,
+# this has/will possibly migrated to gnome-remote-desktop
+suffix=settings-daemon/plugins/sharing
+if is_desktop_environment ubuntu && version_greater "$SETUP_RELEASE" 20.10; then
+	# No associated schema
+	sharing=/com/canonical/unity/${suffix}
+else
+	# Relocatable schema org.gnome.settings-daemon.plugins.sharing.service
+	sharing=/org/gnome/${suffix}
+fi
+
+# UI only adds the *primary* connection. Not all active or known
+readarray -t conns < <(nm_list_all_connections_uuid)
+
+dconf write        "$sharing"/active                           true
+dconf list include "$sharing"/vino-server/enabled-connections  s "${conns[@]}"
+
+# Actually starts vino-server
+# I'm sure there is a less intrusive way to do this, possibly via D-Bus
+# But simply restarting the settings daemon seems harmless enough
+# Ubuntu Gnome possibly uses something else: gnome-remote-desktop, org.gnome...
+systemctl --user restart unity-settings-daemon
+
+# -----------------------------------------------------------------------------
+
+vino_disable() {
+	# Remove *only* the *primary* connection
+	# Leave all other keys untouched, including password
+	dconf list remove "$sharing"/vino-server/enabled-connections  \
+		"$(nm_primary_connection_uuid)"
+	systemctl --user restart unity-settings-daemon
+}
