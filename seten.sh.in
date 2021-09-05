@@ -10,6 +10,7 @@ SETUP_DIR=@@SETUP_DIR@@
 
 # Adapted from setup/template
 DESCRIPTION='Setup Engine Launcher'
+ARGS='JOB(s)...'
 setuplib=${SETUP_LIB_PATH:-"$SETUP_DIR"/setuplib}
 if [[ -r "$setuplib" ]]; then
 	# shellcheck source=setuplib

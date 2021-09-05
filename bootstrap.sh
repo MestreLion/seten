@@ -46,10 +46,10 @@ include-config() {
 			continue
 		fi
 
-		pushd "$(dirname "$config")"
+		pushd "$(dirname "$config")" >/dev/null
 		# shellcheck source=seten.template.conf
 		source "$config"
-		popd
+		popd >/dev/null
 	done
 }
 include-config "$SETEN_CONFIG"

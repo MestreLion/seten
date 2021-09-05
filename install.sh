@@ -9,6 +9,7 @@
 # - If a config file is not provided, create and install one from template
 # - Install the bash-completion file
 # - Install the executable(s)
+# - Install extra packages
 #
 ###############################################################################
 
@@ -28,16 +29,21 @@ fi
 execdir=$BIN_HOME  # TODO: add SETUP_PREFIX to allow system-wide install
 bashcompdir=${BASH_COMPLETION_USER_DIR:-"${DATA_HOME}/bash-completion/completions"}
 
+execfile=$execdir/$SETUP_SLUG
+bashcompfile=$bashcompdir/$SETUP_SLUG
+
 #------------------------------------------------------------------------------
 
 show_settings() {
 	if ! ((SETUP_VERBOSE)); then return; fi
-	set | grep '^SETUP_' | sort || :
+	message "Settings from environment and parsed from config file:"
+	set | egrep '^SET(UP|EN)_' | sort || :
 }
 
 #------------------------------------------------------------------------------
 
 if [[ ! -f "$SETEN_CONFIG" ]]; then
+	message "Install config file: ${SETEN_CONFIG}"
 	install --mode 600 -DT -- "$mydir"/seten.template.conf "$SETEN_CONFIG"
 fi
 
@@ -58,22 +64,30 @@ fi
 # Hardcode it in seten.sh.in and seten.bash-completion.in
 # Only bootstrap.sh read it from config file.
 
+message "Install main executable: ${execfile}"
 mkdir -p -- "$execdir"
 awk \
 	-v SETUP_DIR="$(printf '%q' "$mydir")"  \
 	'{
-		sub("@@SETUP_DIR@@", $SETUP_DIR)
+		sub("@@SETUP_DIR@@", SETUP_DIR)
 		print
 	}' \
-	"$mydir"/seten.sh.in > "${execdir}/${SETUP_SLUG}"
+	"$mydir"/seten.sh.in > "$execfile"
+chmod +x -- "$execfile"
 
+message "Install bash completion: ${bashcompfile}"
 mkdir -p -- "$bashcompdir"
 awk \
 	-v SETUP_DIR="$( printf '%q' "$mydir")"      \
 	-v SETUP_SLUG="$(printf '%q' "$SETUP_SLUG")" \
 	'{
-		sub("@@SETUP_SLUG@@", $SETUP_SLUG)
-		sub("@@SETUP_DIR@@",  $SETUP_DIR)
+		sub("@@SETUP_SLUG@@", SETUP_SLUG)
+		sub("@@SETUP_DIR@@",  SETUP_DIR)
 		print
 	}' \
-	"$mydir"/setup.bash-completion.in > "${bashcompdir}/${SETUP_SLUG}"
+	"$mydir"/seten.bash-completion.in > "$bashcompfile"
+
+message "Install extra packages"
+install_package "${SETUP_PACKAGES[@]}"
+
+message "Done! Use the command '${SETUP_SLUG}' to run setup scripts"

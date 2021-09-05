@@ -41,7 +41,7 @@ BIN_HOME=${XDG_BIN_HOME:-"$HOME/.local/bin"}  # Not official, but widely used
 # Set and source the config file, silently ignoring if it does not exist
 # Factory default is intentionally not affected by SETUP_SLUG
 # Keep it in sync with bootstrap.sh!
-SETEN_CONFIG=${1:-${SETEN_CONFIG:-"${CONFIG_HOME}/seten/seten.conf"}}
+SETEN_CONFIG=${SETEN_CONFIG:-"${CONFIG_HOME}/seten/seten.conf"}
 include-config() {
 	local config
 	for config in "$@"; do
@@ -53,10 +53,10 @@ include-config() {
 			continue
 		fi
 
-		pushd "$(dirname "$config")"
+		pushd "$(dirname "$config")" >/dev/null
 		# shellcheck source=seten.template.conf
-		source "$config"
-		popd
+		source "$(basename "$config")"
+		popd >/dev/null
 	done
 }
 include-config "$SETEN_CONFIG"
@@ -80,13 +80,6 @@ SETUP_DRYRUN=${SETUP_DRYRUN:-0}
 SETUP_USER=${SETUP_USER:-${USER,,}}
 SETUP_USERNAME=${SETUP_USERNAME:-$(username)}
 SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/setuplib.d"}
-
-# DEPRECATED! Use setup_run() directly.
-if ((SETUP_DRYRUN)); then
-	SETUP_RUN='setup_run'
-else
-	SETUP_RUN='setup_run'
-fi
 
 #------------------------------------------------------------------------------
 # Platform info
@@ -199,6 +192,17 @@ integer() {
 	fi
 }
 
+confirm() {
+	# Non-empty garbage will always evaluate to and behave as NO
+	local message=${1:-"Confirm?"}
+	local default=NO
+
+	if ((SETUP_INTERACTIVE)); then
+		read -rp "$message (y/n, default $default): " resp
+		case "${resp:-$default}" in [Yy]*);; *) return 1;; esac
+	fi
+}
+
 # NOTE: Given install_package() and exists(),
 # required() and required_install() are DEPRECATED!
 
@@ -273,7 +277,7 @@ install_package() {
 		if ! package_installed "$pkg"; then pkgs+=("$pkg"); fi
 	done
 	if (("${#pkgs[@]}")); then
-		$SETUP_RUN sudo apt install -y "${pkgs[@]}"
+		setup_run sudo apt install -y "${pkgs[@]}"
 	fi
 }
 package_install() {
@@ -289,7 +293,7 @@ package_remove() {
 		if package_installed "$pkg"; then pkgs+=("$pkg"); fi
 	done
 	if (("${#pkgs[@]}")); then
-		$SETUP_RUN sudo apt remove -y "${pkgs[@]}"
+		setup_run sudo apt remove -y "${pkgs[@]}"
 	fi
 }
 
