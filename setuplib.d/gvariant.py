@@ -123,7 +123,7 @@ def xarray(*args):
     print(gvariant_repr(newlist, vartype))
 
 
-def _xarray(op: str, gvlist: GLib.GVariant, itemtype: str, *items) -> list:
+def _xarray(op: str, gvlist: GLib.Variant, itemtype: str, *items) -> list:
     if op in ('clear', 'new'):
         return []
 
