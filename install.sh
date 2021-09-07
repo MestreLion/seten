@@ -9,8 +9,7 @@
 # - If a config file is not provided, create and install one from template
 # - Install the bash-completion file
 # - Install the executable(s)
-# - Install extra packages
-#
+# - Install and upgrade extra repositories and packages
 ###############################################################################
 
 DESCRIPTION='Setup Configuration'
@@ -23,6 +22,11 @@ if [[ -r "$setuplib" ]]; then
 else
 	echo "Setup library not found: $setuplib" >&2; exit 1;
 fi
+
+#------------------------------------------------------------------------------
+
+if ! [[ -v SETUP_REPOSITORIES ]]; then SETUP_REPOSITORIES=(universe multiverse); fi
+if ! [[ -v SETUP_PACKAGES     ]]; then SETUP_PACKAGES=(); fi
 
 #------------------------------------------------------------------------------
 
@@ -87,8 +91,18 @@ awk \
 	}' \
 	"$mydir"/seten.bash-completion.in > "$bashcompfile"
 
+message "Enable extra repositories"
+for repo in "${SETUP_REPOSITORIES[@]}"; do
+	setup_run sudo add-apt-repository -y --no-update "$repo"
+done
+setup_run sudo apt update
+
+message "Upgrade packages"
+setup_run sudo apt -y full-upgrade
+
 message "Install extra packages"
 install_package "${SETUP_PACKAGES[@]}"
+setup_run sudo apt -y autoremove
 
 if [[ "$PATH" =~ (^|:)"$execdir"(:|$) ]]; then
 	message "Done! Use the command '${SETUP_SLUG}' to run setup scripts"
