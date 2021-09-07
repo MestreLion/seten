@@ -43,7 +43,7 @@ pluginadd=(
 #	git             # interesting, but disruptive
 	joinlines
 	snippets
-	sort
+	sort            # already enabled in 3.37.2
 	textsize
 #	translate       # not useful
 	wordcompletion
@@ -72,7 +72,17 @@ gsettings set "$gsprefpath".editor  auto-indent             true        # Editor
 gsettings set "$gsprefpath".editor  auto-save               true        # Editor
 gsettings set "$gsprefpath".editor  create-backup-copy      false       # Editor, default in Ubuntu 18.04
 gsettings set "$gsprefpath".editor  scheme                  'cobalt'    # Fonts & Colors
-gsettings set "$gsprefpath".ui      max-recents             "$recents"  # not in GUI
+
+# max-recents dconf key was removed in 3.35.90 (Ubuntu 20.04 onwards)
+# https://gitlab.gnome.org/GNOME/gedit/-/commit/36f727480d185e07e8cf338a405ae564f43a8ddb
+# https://gitlab.gnome.org/GNOME/gedit/-/issues/357
+# And so did the entire recents list in the "Open" button
+# https://gitlab.gnome.org/GNOME/gedit/-/commit/27f54a9aed82109a512743b5e819b18004c19de7
+# https://gitlab.gnome.org/GNOME/gedit/-/issues/276
+# https://gitlab.gnome.org/GNOME/gedit/-/issues/278
+if ! version_greater "$(gedit --version | awk '{print $4}')" 3.35.90; then
+	gsettings set "$gsprefpath".ui  max-recents  "$recents"
+fi
 
 # Plugins
 gsettings array remove   "$gsplugpath"  active-plugins  s "${plugindel[@]}"
