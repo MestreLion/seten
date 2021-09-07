@@ -85,7 +85,7 @@ if ((verbose)) && [[ "${1:-}" && "$SETEN_CONFIG" != "$defaultconf" ]]; then
 fi
 
 if ! type git &>/dev/null; then
-	apt install -y git
+	sudo apt install -y git
 fi
 
 if [[ -d "$dir" ]]; then
