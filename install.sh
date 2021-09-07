@@ -37,7 +37,7 @@ bashcompfile=$bashcompdir/$SETUP_SLUG
 show_settings() {
 	if ! ((SETUP_VERBOSE)); then return; fi
 	message "Settings from environment and parsed from config file:"
-	set | egrep '^SET(UP|EN)_' | sort || :
+	set | grep -E '^SET(UP|EN)_' | sort || :
 }
 
 #------------------------------------------------------------------------------
@@ -90,4 +90,10 @@ awk \
 message "Install extra packages"
 install_package "${SETUP_PACKAGES[@]}"
 
-message "Done! Use the command '${SETUP_SLUG}' to run setup scripts"
+if [[ "$PATH" =~ (^|:)"$execdir"(:|$) ]]; then
+	message "Done! Use the command '${SETUP_SLUG}' to run setup scripts"
+else
+	message "Done! Add '${execdir}' to your \$PATH to enable " \
+		"the command '${SETUP_SLUG}' to run setup scripts"
+	echo "PATH=\$PATH:${execdir}"
+fi
