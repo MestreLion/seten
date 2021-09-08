@@ -1,82 +1,64 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
 
-# Replace home "special" directories for symlinks to data partition
+DESCRIPTION='Replace special user directories with symlinks to data partition'
+ARGS='[TARGET_BASEDIR]'
 
-setuplib=${1:-$SETUP_LIB}
-basedir=${2:-${SETUP_SYMLINKS_BASEDIR:-/dados}}
-is_desktop=$SETUP_DESKTOP
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
 
-myname="${0##*/}"
+# -----------------------------------------------------------------------------
 
-usage() { echo "Usage: ${0##*/} SETUP_LIB [BASEDIR]" >&2; exit 1; }
+basedir=${1:-SETUP_USERDIRS_TARGET:-}
+if ! [[ -v SETUP_USERDIRS_OVERRIDES ]]; then declare -A SETUP_USERDIRS_OVERRIDES; fi
+if ! [[ -v SETUP_USERDIRS_HIDE ]]; then SETUP_USERDIRS_HIDE=(TEMPLATES PUBLICSHARE); fi
 
-uninstall() {
-#	[[ -h ~/Documents ]] && rm ~/Documents  && mkdir ~/Documents
-#	[[ -h ~/Downloads ]] && rm ~/Downloads  && mkdir ~/Downloads
-#	[[ -h ~/Music     ]] && rm ~/Music      && mkdir ~/Music
-#	[[ -h ~/Pictures  ]] && rm ~/Pictures   && mkdir ~/Pictures
-#	[[ -h ~/Videos    ]] && rm ~/Videos     && mkdir ~/Videos
+# -----------------------------------------------------------------------------
 
-	[[ -f "$HOME"/.config/user-dirs.dirs.bak ]] && mv "$HOME"/.config/user-dirs.dirs{.bak,}
-#	[[ -d "$HOME"/.templates   ]] && mv "$HOME"/{.templates,Templates}
-#	[[ -d "$HOME"/.publicshare ]] && mv "$HOME"/{.publicshare,Public}
-#	[[ -f "$HOME/examples.desktop" ]] || cp /etc/skel/examples.desktop "$HOME"
+
+merge_dirs() {
+	local tag=$1
+	source=$(xdg-user-dir "$tag")
+	# Skip if it does not exist, or already a symlink, or set to $HOME
+	if [[ ! -e "$source" || -h "$source" || "$source" == "$HOME" ]]; then
+		return
+	fi
+	leaf=$(realpath --canonicalize-missing --relative-base "$HOME" -- \
+		"${SETUP_USERDIRS_OVERRIDES[$tag]:-$source}")
+	target=$(realpath --canonicalize-missing --relative-base "$basedir" -- "$leaf")
+	message "Move content and symlink '$source' -> '$target'"
+	setup_run mkdir -p -- "$target"
+	setup_run rsync -aSh --progress --remove-source-files -- \
+		"${source%/}/" "${target%/}/"
+	setup_run find "$source" -type d -empty -delete
+	setup_run ln -s -- "$target" "$source"
 }
-
-if [[ -r "$setuplib" ]]; then
-	source "$setuplib"
-else
-	echo "Setup library not found! $setuplib" >&2
-	usage
+if [[ "$basedir" ]]; then
+	for tag in DOCUMENTS DOWNLOAD MUSIC PICTURES VIDEOS; do
+		merge_dirs "$tag"
+	done
 fi
 
-xdg=${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs
-
-tags=(
-	DOCUMENTS
-	DOWNLOAD
-	MUSIC
-	PICTURES
-	VIDEOS
-)
-
-declare -A desktop=(
-	[DOCUMENTS]=Arquivos
-	[DOWNLOAD]=Download
-	[MUSIC]=Mp3/Albuns
-	[PICTURES]=Fotos
-	[VIDEOS]=Filmes
-)
-
-source "$xdg" || fatal
-for tag in "${tags[@]}"; do
-	var=XDG_${tag}_DIR
-	dir=${!var}
-	if [[ "$is_desktop" ]]; then
-		leaf=${desktop[$tag]}
-	else
-		leaf=${dir##*/}
+# Hide templates, publicshare, examples
+message "Hide Examples" "${SETUP_USERDIRS_HIDE[@]}"
+hide_path() {
+	local path=$1
+	local path_file; path_file=$(basename -- "$path")
+	local path_dir;  path_dir=$( dirname  -- "$path")
+	local hidden=${path_dir}/.hidden
+	if [[ -e "$path" ]] && ! grep -qF "$path_file" "$hidden" 2>/dev/null; then
+		backup_file "$hidden"
+		echo "$path_file" | setup_run tee -a "$hidden"
 	fi
-	target=$basedir/$leaf
-	if ! [[ -h "$dir" ]]; then
-		shopt -s nullglob
-		files=("$dir"/*)
-		mkdir -p -- "$target" &&
-		{ [[ "$files" ]] && mv -nt "$target" -- "$dir"/* || :; } &&
-		rmdir -- "$dir" &&
-		ln -s "$target" -- "$dir"
-		shopt -u nullglob
-	fi
+}
+hide_path "$HOME/examples.desktop"
+for tag in "${SETUP_USERDIRS_HIDE[@]}"; do
+	path=$(xdg-user-dir "$tag")
+	if [[ "$path" == "$HOME" ]]; then continue; fi
+	hide_path "$path"
 done
-
-# change templates and publicshare
-if ! [[ -f "$xdg".bak  ]]; then
-	cp "$xdg"{,.bak}
-	sed -i '/^XDG_TEMPLATES_DIR=/s/Templates/.templates/'  -- "$xdg"
-	sed -i '/^XDG_PUBLICSHARE_DIR=/s/Public/.publicshare/' -- "$xdg"
-fi
-[[ -d "$HOME"/Templates ]] && mv "$HOME"/{Templates,.templates}
-[[ -d "$HOME"/Public    ]] && mv "$HOME"/{Public,.publicshare}
-
-# delete examples
-rm -f "$HOME/examples.desktop"

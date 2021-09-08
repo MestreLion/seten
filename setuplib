@@ -180,6 +180,25 @@ message() { if ((SETUP_VERBOSE)); then green    "* $*";     fi; }
 debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
+now()     { date +%Y%m%d%H%M%S; }
+bakfile() { echo "${1:-}.${SETUP_SLUG}.$(now).bak"; }
+backup_file() {
+	local source=$1
+	local target=${2:-}
+	if ! [[ -f "$source" ]]; then
+		return
+	fi
+	if [[ -z "$target" ]]; then
+		# Do not create another backup if one already exists
+		local previous=("${source}.${SETUP_SLUG}".*.bak)
+		if [[ -e "${previous[0]}" ]]; then
+			return
+		fi
+		target=$(bakfile "$source")
+	fi
+	setup_run cp -p --no-clobber -- "$source" "$target"
+}
+
 argument() {
 	if ! [[ "${1:-}" ]]; then
 		echo "Missing required argument${2:+" ${2}"}" >&2
