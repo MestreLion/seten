@@ -3,7 +3,7 @@
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 # -----------------------------------------------------------------------------
 
-DESCRIPTION='Replace special user directories with symlinks to data partition'
+DESCRIPTION='Move special user dirs, replacing with symlinks to data partition'
 ARGS='[TARGET_BASEDIR]'
 
 setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
@@ -14,8 +14,9 @@ fi
 
 # -----------------------------------------------------------------------------
 
-basedir=${1:-SETUP_USERDIRS_TARGET:-}
-if ! [[ -v SETUP_USERDIRS_OVERRIDES ]]; then declare -A SETUP_USERDIRS_OVERRIDES; fi
+basedir=${1:-${SETUP_USERDIRS_TARGET:-}}
+
+if ! [[ -v SETUP_USERDIRS_OVERRIDES[@] ]]; then declare -gA SETUP_USERDIRS_OVERRIDES=(); fi
 if ! [[ -v SETUP_USERDIRS_HIDE ]]; then SETUP_USERDIRS_HIDE=(TEMPLATES PUBLICSHARE); fi
 
 # -----------------------------------------------------------------------------
@@ -23,19 +24,31 @@ if ! [[ -v SETUP_USERDIRS_HIDE ]]; then SETUP_USERDIRS_HIDE=(TEMPLATES PUBLICSHA
 
 merge_dirs() {
 	local tag=$1
-	source=$(xdg-user-dir "$tag")
+	local source; source=$(xdg-user-dir "$tag")
 	# Skip if it does not exist, or already a symlink, or set to $HOME
 	if [[ ! -e "$source" || -h "$source" || "$source" == "$HOME" ]]; then
 		return
 	fi
-	leaf=$(realpath --canonicalize-missing --relative-base "$HOME" -- \
-		"${SETUP_USERDIRS_OVERRIDES[$tag]:-$source}")
-	target=$(realpath --canonicalize-missing --relative-base "$basedir" -- "$leaf")
-	message "Move content and symlink '$source' -> '$target'"
+	local old=${source}.${SETUP_SLUG}.$(now).old  # almost the same as $(bakfile)
+	local target; target=$(
+		cd "$HOME" &&
+		realpath --canonicalize-missing --relative-base "$HOME" -- \
+			"${SETUP_USERDIRS_OVERRIDES[$tag]:-$source}"
+	)
+	if ! [[ "${target:0:1}" == '/' ]]; then
+		target=${basedir%/}/${target}
+	fi
+	if [[ "$target" == "$source" ]]; then
+		return
+	fi
+	message "Move content and symlink: $source	->	$target"
 	setup_run mkdir -p -- "$target"
-	setup_run rsync -aSh --progress --remove-source-files -- \
+	setup_run rsync -qaSh --progress --remove-source-files -- \
 		"${source%/}/" "${target%/}/"
 	setup_run find "$source" -type d -empty -delete
+	if [[ -e "$source" ]]; then
+		mv -- "$source" "$old"
+	fi
 	setup_run ln -s -- "$target" "$source"
 }
 if [[ "$basedir" ]]; then
@@ -45,20 +58,28 @@ if [[ "$basedir" ]]; then
 fi
 
 # Hide templates, publicshare, examples
-message "Hide Examples" "${SETUP_USERDIRS_HIDE[@]}"
+declare -A created
 hide_path() {
 	local path=$1
 	local path_file; path_file=$(basename -- "$path")
 	local path_dir;  path_dir=$( dirname  -- "$path")
 	local hidden=${path_dir}/.hidden
 	if [[ -e "$path" ]] && ! grep -qF "$path_file" "$hidden" 2>/dev/null; then
-		backup_file "$hidden"
+		message "Hide $(basename "$path")"
+		if ! [[ -e "$hidden" ]]; then
+			created["$hidden"]=1
+		fi
+		if ! [[ "${created["$hidden"]:-}" ]]; then
+			backup_file "$hidden"
+		fi
 		echo "$path_file" | setup_run tee -a "$hidden"
 	fi
 }
-hide_path "$HOME/examples.desktop"
 for tag in "${SETUP_USERDIRS_HIDE[@]}"; do
 	path=$(xdg-user-dir "$tag")
-	if [[ "$path" == "$HOME" ]]; then continue; fi
+	if [[ "$path" == "$HOME" ]]; then
+		continue
+	fi
 	hide_path "$path"
 done
+hide_path "$HOME/examples.desktop"  # Not in Ubuntu 20.04 anymore
