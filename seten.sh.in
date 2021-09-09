@@ -4,6 +4,11 @@
 #
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later, at your choice. See <http://www.gnu.org/licenses/gpl>
+
+# TODO: warn on non-existing jobs
+# TODO: add --batch for batch mode, otherwise consider JOB [JOB_ARGS...]
+#       (what about bash-completion?)
+
 ###############################################################################
 
 SETUP_DIR=@@SETUP_DIR@@
