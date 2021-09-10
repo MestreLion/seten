@@ -69,6 +69,7 @@ else
 	profile=":${uuid}/"
 	message "Create Gnome Terminal profile: ${name} (${uuid})"
 	dconf array include "${path}list" s "$uuid"
+	# Or: gsettings array include "${schema}:${path%/}" list s "$uuid"
 fi
 
 # Customize its settings
@@ -77,7 +78,7 @@ fi
 dconf load "${path}${profile}" < <(sed -Ez 's/\n +//g' <<-EOF
 	[/]
 	background-color='rgb(0,0,0)'
-	background-transparency-percent=12
+	background-transparency-percent=15
 	default-size-columns=${cols}
 	default-size-rows=${rows}
 	foreground-color='rgb(204,204,204)'

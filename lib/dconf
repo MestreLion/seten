@@ -41,15 +41,31 @@ dconf_array() {
 	# - Does not set exit status on any error, missing keys, etc
 	# - Does not return the default value if key is not set, unless -d
 	#   (and -d return the default value regardless if a value is set)
+	# - And even that default value is useless: the dconf default value is
+	#   NOT the same as the gsettings default value from schema, which is the
+	#   one that really matters, so dconf default is usually not set either.
 
 	# DConf prints '@as []' on empty lists, and nothing on keys not set
 	local list; list=$(dconf read "$key")
 
-	# If not set, try the default value
+	# If not set, try the dconf default value
 	if [[ -z "$list" ]]; then list=$(dconf read -d "$key"); fi
 
-	# If empty default (or default not set, not sure), format it.
-	if [[ -z "$list" ]]; then list="a${type} []"; fi
+	# If default is empty (or unset), try via gsettings
+	if [[ -z "$list" ]]; then
+		local path=${key%/*}
+		local leaf=${key##*/}
+		local schema; schema=$(
+			gsettings list-schemas --print-paths |
+			grep -iF "$path" | cut -f1 -d' ' || :
+		)
+		if [[ "$schema" ]]; then
+			list=$(gsettings get "$schema" "$leaf")
+		fi
+	fi
+
+	# If still empty, format it.
+	if [[ -z "$list" ]]; then list="@a${type} []"; fi
 
 	list=$(gvariant_array "$op" "$type" "$list" "$@")
 	dconf write "$key" "$list"
