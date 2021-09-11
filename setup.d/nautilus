@@ -16,6 +16,11 @@ include gsettings
 
 # -----------------------------------------------------------------------------
 
+remove=( "${SETUP_NAUTILUS_REMOVE[@]}")
+include=("${SETUP_NAUTILUS_INCLUDE[@]}")
+
+# -----------------------------------------------------------------------------
+
 version=$(nautilus --version | awk '{print $NF}')
 gsrootpath=org.gnome.nautilus
 
@@ -23,8 +28,8 @@ gsrootpath=org.gnome.nautilus
 gsettings set "$gsrootpath".preferences   default-folder-viewer  'list-view'
 gsettings set "$gsrootpath".window-state  maximized               true
 
-gsettings array include "$gsrootpath".list-view  default-visible-columns  s 'type' 'date_modified_with_time'
-gsettings array remove  "$gsrootpath".list-view  default-visible-columns  s 'date_modified'
+gsettings array include "$gsrootpath".list-view  default-visible-columns  s "${remove[@]}"
+gsettings array remove  "$gsrootpath".list-view  default-visible-columns  s "${include[@]}"
 
 # Reference:
 # default-visible-columns=['name', 'size', 'date_modified', 'starred']
