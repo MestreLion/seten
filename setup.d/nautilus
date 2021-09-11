@@ -16,40 +16,44 @@ include gsettings
 
 # -----------------------------------------------------------------------------
 
-remove=( "${SETUP_NAUTILUS_REMOVE[@]}")
-include=("${SETUP_NAUTILUS_INCLUDE[@]}")
+include=("${SETUP_NAUTILUS_INCLUDE[@]}"); debugvar include
+remove=( "${SETUP_NAUTILUS_REMOVE[@]}");  debugvar remove
 
 # -----------------------------------------------------------------------------
 
-version=$(nautilus --version | awk '{print $NF}')
+try nautilus -q
+
 gsrootpath=org.gnome.nautilus
 
 # Change settings
 gsettings set "$gsrootpath".preferences   default-folder-viewer  'list-view'
 gsettings set "$gsrootpath".window-state  maximized               true
 
-gsettings array include "$gsrootpath".list-view  default-visible-columns  s "${remove[@]}"
-gsettings array remove  "$gsrootpath".list-view  default-visible-columns  s "${include[@]}"
+gsettings array insert  "$gsrootpath".list-view  default-column-order     s mime_type after type
+gsettings array include "$gsrootpath".list-view  default-visible-columns  s "${include[@]}"
+gsettings array remove  "$gsrootpath".list-view  default-visible-columns  s "${remove[@]}"
+# Nautilus automatically sort default-visible-columns based on default-column-order
+# when Preferences dialog is opened, so we don't have to worry about doing it now
 
 # Reference:
 # default-visible-columns=['name', 'size', 'date_modified', 'starred']
 # default-column-order=[
-# 	'name',
-# 	'size',
-# 	'type',                     # General, broad variant of mine_type
-# 	'owner',
-# 	'group',
-# 	'permissions',
-# 	'mime_type',
-# 	'where',                    # (Original) Location, only shows in 'Trash'
-# 	'date_modified',            # Only shows time if < 1 day
-# 	'date_modified_with_time',
-# 	'date_accessed',
-# 	'recency',                  # Only shows in 'Recent Files'
-# 	'starred'                   # Added on Ubuntu 20.04 (3.36.3)
+#	'name',
+#	'size',
+#	'type',                     # General, broad variant of mine_type
+#	'owner',
+#	'group',
+#	'permissions',
+#	'mime_type',
+#	'where',                    # (Original) Location, only shows in 'Trash'
+#	'date_modified',            # Only shows time if < 1 day
+#	'date_modified_with_time',
+#	'date_accessed',
+#	'recency',                  # Only shows in 'Recent Files'
+#	'starred'                   # Added on Ubuntu 20.04 (3.36.3)
 # ]
 
-if version_lesser "$version" 3.4.2; then
+if version_lesser "$(nautilus --version | awk '{print $NF}')" 3.4.2; then
 	# Only up to Ubuntu 12.04, as many features were removed in 3.5 and 3.6.
 	# https://askubuntu.com/questions/286430
 	# https://askubuntu.com/questions/149890

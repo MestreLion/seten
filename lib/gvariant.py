@@ -7,6 +7,7 @@ __all__ = [
     'quote',
     'unquote',
     'array',
+    'array_insert',
     'xarray',
 ]
 
@@ -99,6 +100,38 @@ def _array(op: str, itemtype: str, strlist: str, *items) -> list:
         return curlist + [_ for _ in items if _ not in curlist]
 
     raise GVariantError(f"Not a valid list operation: {op!r}")
+
+
+def array_insert(*args):
+    """Insert an ITEM in a GVariant ARRAY relative to other REFERENCE_ITEMs
+
+    Item can be placed after or before the first reference item found.
+    Items and Array formats and limitations are the same as in array().
+    """
+    if len(args) < 5:
+        return usage(f"Missing required arguments in {args}",
+                     "insert ITEM_TYPE ARRAY ITEM <after|before> [REF_ITEM(s)...]")
+    itemtype, strlist, item, where, *references = args
+    item = BASIC_TYPES[itemtype](item)
+    references = list(map(BASIC_TYPES[itemtype], references))
+    newlist = _array_insert(parse_gvariant(strlist, f'a{itemtype}'),
+                            item, where, *references)
+    print(gvariant_repr(newlist, f'a{itemtype}'))
+
+
+def _array_insert(curlist: list, item: object, where: str, *references):
+    """Insert item in array before or after any reference item"""
+    if item in curlist:
+        curlist.remove(item)
+    idx = len(curlist) if where == 'after' else 0
+    for reference in references:
+        if reference in curlist:
+            idx = curlist.index(reference)
+            if where == 'after':
+                idx += 1
+            break
+    curlist.insert(idx, item)
+    return curlist
 
 
 def xarray(*args):
@@ -239,7 +272,8 @@ def main(argv):
     return globals()[name](*args)
 
 
-try:
-    sys.exit(main(sys.argv[1:]))
-except Exception as e:
-    sys.exit(f'GVariant error: {e!r}')
+if __name__ == '__main__':
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except Exception as e:
+        sys.exit(f'GVariant error: {e!r}')
