@@ -77,6 +77,8 @@ sudo service procps reload
 
 # Official instructions from https://www.jetbrains.com/pycharm/download/#section=linux
 # sudo snap install pycharm-community --classic
+# Theme: Cobalt9. Changes: Whitespace 0d3a58 -> 1a72ad
+# https://www.colorhexa.com/0d3a58
 
 #$ sudo add-apt-repository ppa:webupd8team/atom
 #$ sudo apt-get update
