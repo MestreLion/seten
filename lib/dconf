@@ -57,7 +57,7 @@ dconf_array() {
 		local leaf=${key##*/}
 		local schema; schema=$(
 			gsettings list-schemas --print-paths |
-			grep -iF "$path" | cut -f1 -d' ' || :
+			grep -iF "$path" | cut -f1 -d' ' || true
 		)
 		if [[ "$schema" ]]; then
 			list=$(gsettings get "$schema" "$leaf")

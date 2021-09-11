@@ -67,7 +67,7 @@ include-config "$SETEN_CONFIG"
 
 # shellcheck disable=SC2120
 username() { getent passwd "${1:-$USER}" | cut -d: -f5 | cut -d, -f1; }
-absdir() { dirname "$(readlink -f "$1")"; }
+absdir() { dirname "$(readlink -f "${1:-$0}")"; }
 
 # See README's FAQ on why the vars are named SETUP_* instead of SETEN_*
 # Keep in sync with seten.template.conf and bootstrap.sh!
@@ -210,6 +210,13 @@ integer() {
 		echo "${2:+"${2} is "}not an integer: $1" >&2
 		usage 1
 	fi
+}
+# Usage: declare -[g]A mymap=$(copy_map 'MYMAP')
+# Requires Bash 4.4
+copy_map() {
+	local map
+	map=$(declare -p "$1" 2>/dev/null || echo '()')
+	echo "${map#*=}"
 }
 
 confirm() {

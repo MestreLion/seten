@@ -16,6 +16,17 @@ fi
 
 # -----------------------------------------------------------------------------
 
-myvar=${1:-SETUP_MYNAME_MYVAR:-"default"}; argument "$myvar" MYVAR
+myvar=${1:-${SETUP_MYNAME_MYVAR:-"default"}}; argument "$myvar" MYVAR
+myarr=("${SETUP_MYNAME_ARRAY[@]}")  # Bash 4.4 no longer cares if it's unset
+declare -gA mymap;  # shellcheck disable=SC2178
+mymap=$(copy_map 'SETUP_MYNAME_MYMAP')  # Also requires Bash 4.4
 
 # -----------------------------------------------------------------------------
+
+for item in "${myarr[@]}"; do
+	echo "$item"
+done
+
+for key in "${!mymap[@]}"; do
+	echo "${key}=${mymap["$key"]}"
+done
