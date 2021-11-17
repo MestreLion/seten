@@ -16,7 +16,7 @@ fi
 
 default_ssh_port=22
 
-port=${1:-SETUP_SSH_PORT:-$default_ssh_port}; argument "$port" PORT
+port=${1:-SETUP_SSH_PORT:-$default_ssh_port}; integer "$port" PORT
 
 shift
 auth_pubkeys=("${SETUP_SSH_AUTH_PUBKEYS[@]}")
@@ -104,7 +104,6 @@ if [[ "$port" != "$default_ssh_port" ]]; then
 		Port ${port}
 	EOF
 fi
-systemctl reload ssh
 
 
 message 'Disable remote login for root'
@@ -138,3 +137,10 @@ else
 	ufw reload
 fi
 # ufw enable  # Not this script's job
+
+message 'Restarting SSH server'
+if ((SETUP_VERBOSE)); then
+	white "\tCurrenty logged in SSH users will be disconnected. Reconnect with:"
+	white "\t\tssh ${USER}@${HOSTNAME} -p ${port}"
+fi
+systemctl reload ssh
