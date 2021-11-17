@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Setup SSH server, add authorized keys and disable password login'
+ARGS='[PORT] [AUTH_PUBKEY(S)...]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+default_ssh_port=22
+
+port=${1:-SETUP_SSH_PORT:-$default_ssh_port}; argument "$port" PORT
+
+shift
+auth_pubkeys=("${SETUP_SSH_AUTH_PUBKEYS[@]}")
+if (($#)); then auth_pubkeys=("$@"); fi
+if ! ((${#auth_pubkeys})); then argument "" AUTH_PUBKEYS; fi
+
+# -----------------------------------------------------------------------------
+
+# Will be used by both authorized keys (read) and SSH Setup (delete)
+rootkeys=/root/.ssh/authorized_keys  # better not use $HOME, if sudo without -H
+
+#------------------------------------------------------------------------------
+
+message 'Add authorized SSH keys'
+add_ssh_key() {
+	local key=${1:-}
+	local path=${2:-}
+	if ! grep -Fxq -- "$key" "$path" 2>/dev/null &&
+		ssh-keygen -l -f <(echo "$key") &>/dev/null
+	then
+		echo "$key" >> "$path"
+	fi
+}
+# Create user SSH paths, if needed
+sshdir="$HOME"/.ssh
+userkeys=$sshdir/authorized_keys
+if ! [[ -d "$sshdir"   ]]; then mkdir --parents --mode 0700 -- "$sshdir"; fi
+if ! [[ -r "$userkeys" ]]; then touch -- "$userkeys"; chmod 0600 -- "$userkeys"; fi
+
+# Add user-supplied keys
+for key in "${auth_pubkeys[@]}"; do
+	add_ssh_key "$key" "$userkeys"
+done
+# Add keys authorized for root
+if [[ -s "$rootkeys" ]]; then
+	while IFS= read -r key; do
+		add_ssh_key "$key" "$userkeys"
+	done < "$rootkeys"
+fi
+
+
+message 'Setup SSH'
+# SSH custom settings
+# - Disable SSH login for root
+# - Disable SSH password login for all users
+# - Extend timeout to 120s * 720 = 24h
+# - Disable X11 Forwarding
+# - Allow SSH tunneling
+configdir=/etc/ssh/sshd_config.d
+cat > "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
+	# By ${SETUP_NAME}
+
+	# Disable SSH login for root
+	PermitRootLogin no
+
+	# Disable SSH password login for all users
+	PasswordAuthentication no
+
+	# Honor PermitRootLogin=no and PasswordAuthentication=no when UsePAM=yes
+	# Already the default in Debian, as is UsePAM=yes
+	ChallengeResponseAuthentication no
+
+	# Disable inactivity timeout AND set unresponsiveness timeout to 120s(x3)
+	ClientAliveInterval 120
+
+	# Already default
+	ClientAliveCountMax 3
+	TCPKeepAlive yes
+
+	# Disable X11 Forwarding
+	# Default in Debian is yes
+	X11Forwarding no
+
+	# Allow SSH tunneling
+	GatewayPorts yes
+EOF
+# Remove root authorized keys, just in case
+try mv -- "$rootkeys" "$(bakfile "$rootkeys")"
+
+# Change listening port
+if [[ "$port" != "$default_ssh_port" ]]; then
+	cat > "$configdir"/50-"$SETUP_SLUG"-port.conf <<-EOF
+		# By ${SETUP_NAME}
+		# Change listening port
+		Port ${port}
+	EOF
+fi
+systemctl reload ssh
+
+
+message 'Disable remote login for root'
+# Disable remote login for root, including SSH
+# root can only log in using console
+conf=/etc/security/access.conf
+setting='-:root:ALL EXCEPT LOCAL'
+if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
+	backup_file "$conf"
+	cat >> "$conf" <<-EOF
+
+
+	# Added by ${SETUP_NAME}
+	# Disable remote login for root, including SSH
+	${setting}
+	EOF
+fi
+
+
+message 'Enable Firewall rule for SSH'
+if [[ "$port" == "$default_ssh_port" ]]; then
+	ufw allow OpenSSH
+else
+	cat > /etc/ufw/applications.d/ssh."$SETUP_SLUG".conf <<-EOF
+		[SSH]
+		title=${SETUP_NAME} SSH custom port
+		description=OpenSSH service on port ${port} created by ${SETUP_NAME}
+		ports=${port}/tcp
+	EOF
+	ufw allow SSH
+	ufw reload
+fi
+# ufw enable  # Not this script's job
