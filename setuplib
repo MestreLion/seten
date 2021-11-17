@@ -197,7 +197,19 @@ backup_file() {
 		fi
 		target=$(bakfile "$source")
 	fi
-	setup_run cp -p --no-clobber -- "$source" "$target"
+	setup_run sudo_for "$target" cp -p --no-clobber -- "$source" "$target"
+}
+sudo_for() {
+	local path=$1; shift
+	local use=0
+	if ! [[ -e "$path" ]]; then
+		path=$(dirname -- "$(realpath "$path")")
+	fi
+	if [[ -w "$path" ]]; then
+		"$@"
+		return
+	fi
+	sudo "$@"
 }
 
 argument() {

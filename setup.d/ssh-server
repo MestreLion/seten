@@ -16,9 +16,9 @@ fi
 
 default_ssh_port=22
 
-port=${1:-SETUP_SSH_PORT:-$default_ssh_port}; integer "$port" PORT
+port=${1:-${SETUP_SSH_PORT:-$default_ssh_port}}; integer "$port" PORT
 
-shift
+try shift
 auth_pubkeys=("${SETUP_SSH_AUTH_PUBKEYS[@]}")
 if (($#)); then auth_pubkeys=("$@"); fi
 if ! ((${#auth_pubkeys})); then argument "" AUTH_PUBKEYS; fi
@@ -66,7 +66,7 @@ message 'Setup SSH'
 # - Disable X11 Forwarding
 # - Allow SSH tunneling
 configdir=/etc/ssh/sshd_config.d
-cat > "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
+sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	# By ${SETUP_NAME}
 
 	# Disable SSH login for root
@@ -94,11 +94,11 @@ cat > "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	GatewayPorts yes
 EOF
 # Remove root authorized keys, just in case
-try mv -- "$rootkeys" "$(bakfile "$rootkeys")"
+try sudo mv -- "$rootkeys" "$(bakfile "$rootkeys")"
 
 # Change listening port
 if [[ "$port" != "$default_ssh_port" ]]; then
-	cat > "$configdir"/50-"$SETUP_SLUG"-port.conf <<-EOF
+	sudo tee "$configdir"/50-"$SETUP_SLUG"-port.conf <<-EOF
 		# By ${SETUP_NAME}
 		# Change listening port
 		Port ${port}
@@ -113,7 +113,7 @@ conf=/etc/security/access.conf
 setting='-:root:ALL EXCEPT LOCAL'
 if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
 	backup_file "$conf"
-	cat >> "$conf" <<-EOF
+	sudo tee -a "$conf" <<-EOF
 
 
 	# Added by ${SETUP_NAME}
@@ -125,16 +125,16 @@ fi
 
 message 'Enable Firewall rule for SSH'
 if [[ "$port" == "$default_ssh_port" ]]; then
-	ufw allow OpenSSH
+	sudo ufw allow OpenSSH
 else
-	cat > /etc/ufw/applications.d/ssh."$SETUP_SLUG".conf <<-EOF
+	sudo tee /etc/ufw/applications.d/ssh."$SETUP_SLUG".conf <<-EOF
 		[SSH]
 		title=${SETUP_NAME} SSH custom port
 		description=OpenSSH service on port ${port} created by ${SETUP_NAME}
 		ports=${port}/tcp
 	EOF
-	ufw allow SSH
-	ufw reload
+	sudo ufw allow SSH
+	sudo ufw reload
 fi
 # ufw enable  # Not this script's job
 
@@ -143,4 +143,4 @@ if ((SETUP_VERBOSE)); then
 	white "\tCurrenty logged in SSH users will be disconnected. Reconnect with:"
 	white "\t\tssh ${USER}@${HOSTNAME} -p ${port}"
 fi
-systemctl reload ssh
+sudo systemctl reload ssh
