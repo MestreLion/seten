@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# https://wiki.winehq.org/Ubuntu
+
+
+sudo dpkg --add-architecture i386
+
+# if ubuntu 18: ###
+wget -qO- 'https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key' | sudo apt-key add -
+sudo apt-add-repository --no-update 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
+####
+
+wget -qO- 'https://dl.winehq.org/wine-builds/winehq.key' | sudo apt-key add -
+sudo apt-add-repository --no-update 'https://dl.winehq.org/wine-builds/ubuntu/'
+sudo apt update
+
+sudo apt install --install-recommends winehq-stable
