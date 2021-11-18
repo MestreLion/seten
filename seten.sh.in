@@ -44,9 +44,6 @@ runmsg()  { if ((SETUP_VERBOSE)); then blue  "*** $*"; fi; }
 
 debugvar setupdir
 
-if !(()); then
-	fatal "No jobs selected"
-fi
 header 'Setup Engine'
 message "Config file: ${SETEN_CONFIG}"
 message "Jobs to run: ${basenames[*]}"

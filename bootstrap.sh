@@ -46,6 +46,7 @@ include-config() {
 			continue
 		fi
 
+		config=$(readlink -f "$config")
 		pushd "$(dirname "$config")" >/dev/null
 		# shellcheck source=seten.template.conf
 		source "$config"
