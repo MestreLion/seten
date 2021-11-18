@@ -30,12 +30,13 @@ upgrade() (
 	git -C "$SETUP_DIR" fetch
 	git -C "$SETUP_DIR" checkout --force main
 	git -C "$SETUP_DIR" reset --hard origin/main
+	"$SETUP_DIR"/install.sh
 )
 
 # Pre-parse for -U|--upgrade, ignoring if after '--'. Keep in sync with bootstrap.sh!
 for arg in "$@"; do
 	if [[ "$arg" == '--' ]]; then break; fi
-	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then usage; fi
+	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then upgrade; fi
 done
 unset arg
 
