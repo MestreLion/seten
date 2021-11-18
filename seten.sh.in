@@ -32,7 +32,8 @@ batch_error=${SETUP_BATCH_ERROR:-"abort"}; argument "$batch_error" BATCH_ERROR
 #------------------------------------------------------------------------------
 
 setupdir=$SETUP_DIR/setup.d  # keep in sync with bash-completion!
-basenames=("$@")
+basenames=("$@"); if ! ((${#basenames[@]})); then argument "" JOB; fi
+
 
 #------------------------------------------------------------------------------
 
@@ -43,6 +44,9 @@ runmsg()  { if ((SETUP_VERBOSE)); then blue  "*** $*"; fi; }
 
 debugvar setupdir
 
+if !(()); then
+	fatal "No jobs selected"
+fi
 header 'Setup Engine'
 message "Config file: ${SETEN_CONFIG}"
 message "Jobs to run: ${basenames[*]}"
