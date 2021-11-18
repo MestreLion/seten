@@ -140,7 +140,7 @@ fi
 
 message 'Restarting SSH server'
 if ((SETUP_VERBOSE)); then
-	white "\tCurrenty logged in SSH users will be disconnected. Reconnect with:"
-	white "\t\tssh ${USER}@${HOSTNAME} -p ${port}"
+	white "    Currenty logged in SSH users might be disconnected. Reconnect with:"
+	white "        ssh ${USER}@${HOSTNAME} -p ${port}"
 fi
 sudo systemctl reload ssh
