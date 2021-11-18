@@ -15,7 +15,7 @@ SETUP_DIR=@@SETUP_DIR@@
 
 # Adapted from setup.d/template
 DESCRIPTION='Setup Engine Launcher'
-ARGS='JOB(s)...'
+ARGS='[-U|--upgrade] JOB(s)...'
 setuplib=${SETUP_LIB_PATH:-"$SETUP_DIR"/setuplib}
 if [[ -r "$setuplib" ]]; then
 	# shellcheck source=setuplib
@@ -23,6 +23,21 @@ if [[ -r "$setuplib" ]]; then
 else
 	echo "Setup library not found: $setuplib" >&2; exit 1;
 fi
+
+#------------------------------------------------------------------------------
+
+upgrade() (
+	git -C "$SETUP_DIR" fetch
+	git -C "$SETUP_DIR" checkout --force main
+	git -C "$SETUP_DIR" reset --hard origin/main
+)
+
+# Pre-parse for -U|--upgrade, ignoring if after '--'. Keep in sync with bootstrap.sh!
+for arg in "$@"; do
+	if [[ "$arg" == '--' ]]; then break; fi
+	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then usage; fi
+done
+unset arg
 
 #------------------------------------------------------------------------------
 
