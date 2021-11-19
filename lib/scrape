@@ -1,0 +1,12 @@
+# HTML Scraper
+#
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+
+scrape_urls() {
+	local url=$1
+	local pattern=${2:-}
+	curl -LSs -- "$url" |
+	try grep -Poi "<a +[^>]*\bhref *= *['\"]?\K[^'\"> ]+" |
+	if [[ "$pattern" ]]; then try grep -Ei "$pattern"; else cat; fi
+}

@@ -1,0 +1,29 @@
+# Java binary downloads
+#
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+
+include scrape
+
+java_download_latest_oracle() {
+	local outdir=$1
+	java_download_latest "$outdir" 'https://www.oracle.com/java/technologies/downloads/'
+}
+
+java_download_latest_openjdk() {
+	local outdir=$1
+	index=($(scrape_urls 'https://openjdk.java.net/' 'jdk\.java\.net/[0-9]+'))
+	java_download_latest "$outdir" "${index[0]}"
+}
+
+java_download_latest() {
+	local outdir=$1
+	local index=$2
+	local arch=$(arch); if [[ "$arch" == x86_64 ]]; then arch=x64; fi
+	local archive=($(scrape_urls "$index" "linux-${arch}_bin\\.tar\\.gz"))
+	local sha=$(curl -LSs "${archive[1]}")
+	wget -NP "$outdir" -- "${archive[0]}"
+	archive=$outdir/$(basename "${archive[0]}")
+	sha256sum --check - <<< "${sha}  ${archive}"
+	echo "$archive"
+}
