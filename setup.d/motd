@@ -24,6 +24,7 @@ setup_run sudo tee "$conf" <<-EOF
 	# A nice ASCII sysinfo for MOTD
 	# https://github.com/KittyKatt/screenFetch
 	# Alternative: neofetch
+	echo
 	screenfetch
 EOF
 setup_run sudo chmod +x "$conf"
