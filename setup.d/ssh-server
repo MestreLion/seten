@@ -40,6 +40,7 @@ add_ssh_key() {
 		echo "$key" >> "$path"
 	fi
 }
+
 # Create user SSH paths, if needed
 sshdir="$HOME"/.ssh
 userkeys=$sshdir/authorized_keys
@@ -50,6 +51,7 @@ if ! [[ -r "$userkeys" ]]; then touch -- "$userkeys"; chmod 0600 -- "$userkeys";
 for key in "${auth_pubkeys[@]}"; do
 	add_ssh_key "$key" "$userkeys"
 done
+
 # Add keys authorized for root
 if [[ -s "$rootkeys" ]]; then
 	while IFS= read -r key; do
@@ -93,11 +95,10 @@ sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	# Allow SSH tunneling
 	GatewayPorts yes
 EOF
-# Remove root authorized keys, just in case
-try sudo mv -- "$rootkeys" "$(bakfile "$rootkeys")"
 
 # Change listening port
 if [[ "$port" != "$default_ssh_port" ]]; then
+	message "Change listening port to ${port}"
 	sudo tee "$configdir"/50-"$SETUP_SLUG"-port.conf <<-EOF
 		# By ${SETUP_NAME}
 		# Change listening port
@@ -122,25 +123,23 @@ if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
 	EOF
 fi
 
+# Remove root authorized keys, just in case
+try sudo mv -- "$rootkeys" "$(bakfile "$rootkeys")"
+
 
 message 'Enable Firewall rule for SSH'
 if [[ "$port" == "$default_ssh_port" ]]; then
 	sudo ufw allow OpenSSH
 else
 	sudo tee /etc/ufw/applications.d/ssh."$SETUP_SLUG".conf <<-EOF
+		# Created by ${SETUP_NAME}
 		[SSH]
 		title=${SETUP_NAME} SSH custom port
-		description=OpenSSH service on port ${port} created by ${SETUP_NAME}
+		description=OpenSSH service on port ${port}
 		ports=${port}/tcp
 	EOF
 	sudo ufw allow SSH
 	sudo ufw reload
 fi
-# ufw enable  # Not this script's job
 
-message 'Restarting SSH server'
-if ((SETUP_VERBOSE)); then
-	white "    Currenty logged in SSH users might be disconnected. Reconnect with:"
-	white "        ssh ${USER}@${HOSTNAME} -p ${port}"
-fi
 sudo systemctl reload ssh
