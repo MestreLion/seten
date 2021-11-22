@@ -7,23 +7,25 @@ include scrape
 
 java_download_latest_oracle() {
 	local outdir=$1
-	java_download_latest "$outdir" 'https://www.oracle.com/java/technologies/downloads/'
+	local user=${2:-}
+	java_download_latest "$outdir" 'https://www.oracle.com/java/technologies/downloads/' "$user"
 }
 
 java_download_latest_openjdk() {
 	local outdir=$1
+	local user=${2:-}
 	index=($(scrape_urls 'https://openjdk.java.net/' 'jdk\.java\.net/[0-9]+'))
-	java_download_latest "$outdir" "${index[0]}"
+	java_download_latest "$outdir" "${index[0]}" "$user"
 }
 
 java_download_latest() {
 	local outdir=$1
 	local index=$2
+	local user=${3:-}
 	local arch=$(arch); if [[ "$arch" == x86_64 ]]; then arch=x64; fi
 	local archive=($(scrape_urls "$index" "linux-${arch}_bin\\.tar\\.gz"))
 	local sha=$(curl -LSs "${archive[1]}")
-	wget -NP "$outdir" -- "${archive[0]}"
-	archive=$outdir/$(basename "${archive[0]}")
-	sha256sum --check - <<< "${sha}  ${archive}"
+	archive=$(download "${archive[0]}" "$outdir" "$user")
+	setup_run sha256sum --check - <<< "${sha}  ${archive}" >&2
 	echo "$archive"
 }
