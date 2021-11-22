@@ -181,6 +181,9 @@ message() { if ((SETUP_VERBOSE)); then green    "* $*";     fi; }
 debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
+user_home()   { getent passwd ${1:-$USER} | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
+user_exists() { id "${1:-}" &>/dev/null; }
+
 now()     { date +%Y%m%d%H%M%S; }
 bakfile() { echo "${1:-}.${SETUP_SLUG}.$(now).bak"; }
 backup_file() {
@@ -242,6 +245,22 @@ confirm() {
 		case "${resp:-$default}" in [Yy]*);; *) return 1;; esac
 	fi
 }
+
+
+download() {
+	local url=$1
+	local outdir=$2
+	local user=${3:-}; if [[ "$user" ]]; then user=(-u "$user"); else user=(); fi
+	wgetcmd=(
+		setup_run sudo_for "$outdir" "${user[@]}"
+		wget -NP "$outdir" --content-disposition --trust-server-names -- "$url"
+	)
+	# run once to download, again to print name.
+	# It won't actually re-download thanks to -N
+	"${wgetcmd[@]}"
+	"${wgetcmd[@]}" 2>&1 | awk -F'[‘’]' '$2 {print $2}'
+}
+
 
 # NOTE: Given install_package() and exists(),
 # required() and required_install() are DEPRECATED!
