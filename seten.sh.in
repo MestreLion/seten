@@ -36,7 +36,7 @@ upgrade() (
 # Pre-parse for -U|--upgrade, ignoring if after '--'. Keep in sync with bootstrap.sh!
 for arg in "$@"; do
 	if [[ "$arg" == '--' ]]; then break; fi
-	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then upgrade; fi
+	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then upgrade; exit; fi
 done
 unset arg
 
@@ -66,7 +66,10 @@ message "Jobs to run: ${basenames[*]}"
 status=0
 for job in "${basenames[@]}"; do
 	setup=$setupdir/$job
-	if [[ ! -x "$setup" ]]; then continue; fi
+	if ! [[ -x "$setup" ]]; then
+		warning "${setup} is not an executable script, skipping..."
+		continue
+	fi
 
 	runmsg "$setup"  # maybe use $job instead of full path $setup?
 	if "$setup"; then continue; else status=$?; fi
