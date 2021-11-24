@@ -9,7 +9,7 @@ repos=(
 )
 
 packages=(
-	git{,g}
+	git{,g,-restore-mtime}
 	gparted
 	ssh                         # installs both client (not needed) and server
 	default-jdk                 # minecraft, eclipse
@@ -23,7 +23,9 @@ packages=(
 	exfat-utils                 # GPT partitions over 2TB, PS4 compatible
 	smartmontools               # SMART tools for command line
 	solaar                      # Logitech Unifying Keyoard/Mouse receiver
-	upnp-router-control
+	apt-rdepends                # apt-tree
+	jq                          # JSON shell manipulation
+	upnp-router-control         # Not in 20.04, may be back in 22.04
 	jstest-gtk
 	gnome-cards-data
 	cowsay fortunes{,-br,-off} lolcat  # cowfortune
