@@ -14,7 +14,7 @@ fi
 
 # -----------------------------------------------------------------------------
 
-# Included by default in Ubuntu:
+# Modules included by default in Ubuntu:
 #	Core
 #	date
 #	filter
@@ -30,14 +30,13 @@ fi
 #	zlib
 # Suggested by default in seten.template.conf:
 #	curl
-modules=("$@" "${SETUP_PHP_MODULES[@]}")
 
 # FPM pulls PHP. No php-doc for PHP 7+
 # For reference:
 #   7.2 in Ubuntu 18.04
 #   7.4 in Ubuntu 20.04
 #   libapache2-mod-php7.* for non-fpm Apache PHP module
-packages=(php-fpm)
+packages=(php-fpm "${SETUP_PHP_MODULES[@]}" "$@")
 
 # -----------------------------------------------------------------------------
 
@@ -51,7 +50,7 @@ declare -A dbms=(
 )
 for package in "${!dbms[@]}"; do
 	if package_installed "$package"; then
-		packages+=(php-"${dbms[$package]#php-}")
+		packages+=("${dbms[$package]}")
 	fi
 done
 install_package "${packages[@]}"
