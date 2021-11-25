@@ -16,9 +16,11 @@ fi
 
 # https://caddyserver.com/docs/install#debian-ubuntu-raspbian
 
+url='https://dl.cloudsmith.io/public/caddy/stable'
+
 install_package debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | setup_run sudo tee /etc/apt/trusted.gpg.d/caddy-stable.asc
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | setup_run sudo tee /etc/apt/sources.list.d/caddy-stable.list
+curl -1sLf "$url"/gpg.key |        setup_run sudo tee /etc/apt/trusted.gpg.d/caddy-stable.asc
+curl -1sLf "$url"/debian.deb.txt | setup_run sudo tee /etc/apt/sources.list.d/caddy-stable.list
 setup_run sudo apt update
 install_package caddy
 

@@ -181,7 +181,7 @@ message() { if ((SETUP_VERBOSE)); then green    "* $*";     fi; }
 debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
-user_home()   { getent passwd ${1:-$USER} | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
+user_home()   { getent passwd "${1:-$USER}" | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
 user_exists() { id "${1:-}" &>/dev/null; }
 
 now()     { date +%Y%m%d%H%M%S; }
@@ -204,7 +204,6 @@ backup_file() {
 }
 sudo_for() {
 	local path=$1; shift
-	local use=0
 	if ! [[ -e "$path" ]]; then
 		path=$(dirname -- "$(realpath "$path")")
 	fi
@@ -258,7 +257,7 @@ download() {
 	# run once to download, again to print name.
 	# It won't actually re-download thanks to -N
 	"${wgetcmd[@]}"
-	"${wgetcmd[@]}" 2>&1 | awk -F'[‘’]' '$2 {print $2}'
+	"${wgetcmd[@]}" 2>&1 | awk -F"[‘’]" '$2 {print $2}'
 }
 
 

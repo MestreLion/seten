@@ -8,24 +8,29 @@ include scrape
 java_download_latest_oracle() {
 	local outdir=$1
 	local user=${2:-}
-	java_download_latest "$outdir" 'https://www.oracle.com/java/technologies/downloads/' "$user"
+	java_download_latest "$outdir" \
+		'https://www.oracle.com/java/technologies/downloads/' "$user"
 }
 
 java_download_latest_openjdk() {
 	local outdir=$1
 	local user=${2:-}
-	index=($(scrape_urls 'https://openjdk.java.net/' 'jdk\.java\.net/[0-9]+'))
-	java_download_latest "$outdir" "${index[0]}" "$user"
+	local urls
+	mapfile -t urls < <(
+		scrape_urls 'https://openjdk.java.net/' 'jdk\.java\.net/[0-9]+')
+	java_download_latest "$outdir" "${urls[0]}" "$user"
 }
 
 java_download_latest() {
 	local outdir=$1
 	local index=$2
 	local user=${3:-}
-	local arch=$(arch); if [[ "$arch" == x86_64 ]]; then arch=x64; fi
-	local archive=($(scrape_urls "$index" "linux-${arch}_bin\\.tar\\.gz"))
-	local sha=$(curl -LSs "${archive[1]}")
-	archive=$(download "${archive[0]}" "$outdir" "$user")
+	local arch; arch=$(arch); if [[ "$arch" == x86_64 ]]; then arch=x64; fi
+	local urlsha
+	mapfile -t urlsha < <(
+		scrape_urls "$index" "linux-${arch}_bin\\.tar\\.gz")
+	local sha; sha=$(curl -LSs "${urlsha[1]}")
+	local archive; archive=$(download "${archive[0]}" "$outdir" "$user")
 	setup_run sha256sum --check - <<< "${sha}  ${archive}" >&2
 	echo "$archive"
 }
