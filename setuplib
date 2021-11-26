@@ -249,9 +249,10 @@ confirm() {
 download() {
 	local url=$1
 	local outdir=$2
-	local user=${3:-}; if [[ "$user" ]]; then user=(-u "$user"); else user=(); fi
+	local user=${3:-}
+	local uarg=(); if [[ "$user" ]]; then uarg=(-u "$user"); fi
 	wgetcmd=(
-		setup_run sudo_for "$outdir" "${user[@]}"
+		setup_run sudo_for "$outdir" "${uarg[@]}"
 		wget -NP "$outdir" --content-disposition --trust-server-names -- "$url"
 	)
 	# run once to download, again to print name.
