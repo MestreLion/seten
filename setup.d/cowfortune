@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Cowfortune'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+repo='git@github.com:MestreLion/cowfortune.git'
+slug=cowfortune  # must match executable name in repo
+
+data_dir=${XDG_DATA_HOME:-"$HOME"/.local/share}/$slug
+bin_dir=${XDG_BIN_HOME:-"$HOME"/.local/bin}
+target=$(relpath "$data_dir" "$bin_dir")/$slug
+exec=$bin_dir/$slug
+
+packages=(
+	cowsay
+	fortunes{,-br,-off}
+	lolcat
+)
+
+install_package "${packages[@]}"
+
+if ! [[ -d "$data_dir" ]]; then git clone "$repo" -- "$data_dir"; fi
+if ! [[ -e "$exec" ]];     then ln -s "$target" -- "$exec"; fi
