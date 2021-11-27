@@ -30,3 +30,5 @@ done
 for key in "${!mymap[@]}"; do
 	echo "${key}=${mymap["$key"]}"
 done
+
+# CHMOD AS EXECUTALE OR IT WON'T RUN!
