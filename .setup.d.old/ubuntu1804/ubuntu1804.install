@@ -6,18 +6,20 @@ repos=(
 	ppa:certbot/certbot  # HTTPS Certificates
 	ppa:unity7maintainers/unity7-desktop  # Unity 7 backports and upgrades
 	ppa:solaar-unifying/stable  # Logitech Unifying pairing
+	ppa:boamaod/nautilus-compare  # updated nautilus-compare
 )
 
 packages=(
 	git{,g,-restore-mtime}
 	gparted
 	ssh                         # installs both client (not needed) and server
+	trash-cli                   # Pulls python2 in 20.04, python3 in 22.04
 	default-jdk                 # minecraft, eclipse
-#	eclipse                     # maybe better using snap version
-#	eclipse-pydev               # Can be installed inside Eclipse
+#	eclipse                     # removed in 20.04, use snap
+#	eclipse-pydev               # removed in 20.04, install inside Eclipse
 #	curl                        # some setup scripts (such as?)
-	rdiff-backup                # pulls Python 2 :-(
-	nautilus-compare            # also pulls Python 2. And meld
+	rdiff-backup                # pulls Python 2 in 18.04, Python3 in 20.04+
+	nautilus-compare            # also pulls Python 2. And meld. Removed in 20.04+
 	deluge                      # another fan of python 2
 	gnome-subtitles             # pulls mono :-(
 	exfat-utils                 # GPT partitions over 2TB, PS4 compatible
@@ -28,7 +30,6 @@ packages=(
 	upnp-router-control         # Not in 20.04, may be back in 22.04
 	jstest-gtk
 	gnome-cards-data
-	cowsay fortunes{,-br,-off} lolcat  # cowfortune
 	virtualbox{,-ext-pack,-guest-additions-iso}  # add script to auto-accept license
 )
 

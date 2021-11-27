@@ -21,14 +21,17 @@ DESCRIPTION='Ubuntu Unity Desktop Environment'
 ARGS=
 
 setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
 if [[ -r "$setuplib" ]]; then source "$setuplib"; else
 	echo "Setup library not found: $setuplib" >&2; exit 1;
 fi
 
 include gsettings
-
-
 # -----------------------------------------------------------------------------
+
+
+# This is for 18.04. For 20.04+, who knows? Try https://ubuntuunity.org/
+setup_run sudo add-apt-repository -y 'ppa:unity7maintainers/unity7-desktop'
 
 # In Ubuntu 20.04 onwards: re-add Global Menu for Firefox
 # https://askubuntu.com/questions/1304442

@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Packages for Desktop, Ubuntu 22.04'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+repos=(
+	'ppa:boamaod/nautilus-compare'  # nautilus-compare, likely to be re-added to repos
+#	'ppa:deluge-team/stable'        # deluge, also in repos
+#	'ppa:pedrocastro/ppa'           # gnome-subtitles, also in repos
+#	'ppa:solaar-unifying/stable'    # solaar, also in repos
+)
+
+packages=(
+	apt-rdepends            # apt-tree
+	exfat-utils             # exFAT for GPT partitions over 2TB (PS4)
+	default-jdk             # Java 11, will possibly be 17 (both LTS)
+	deluge                  # Torrent GUI client
+	git{,g,-restore-mtime}  # Bumping popcorn ;-)
+	gnome-cards-data        # For aisleriot
+	gnome-subtitles         # Pulls libmono :-(
+	gparted
+	jq                      # JSON shell manipulation
+	nautilus-compare        # From PPA
+	pv                      # Nice shell/pipe progress bar
+	rdiff-backup            # backup-home
+	smartmontools           # SMART tools for command line
+	solaar                  # Logitech Unifying Keyboard/Mouse receiver
+	ssh-server
+	trash-cli
+
+#	curl                    # default in ubuntu-* ?
+#	upnp-router-control     # Not in 20.04, may be back in 22.04
+#	jstest-gtk              # Consider flatpak: https://jstest-gtk.gitlab.io/
+#	virtualbox{,-ext-pack,-guest-additions-iso}  # add script to auto-accept license
+)
+
+for repo in "${repos[@]}"; do
+	sudo add-apt-repository -y --no-update "$repo"
+done
+sudo apt update
+
+install_package "${packages[@]}"
