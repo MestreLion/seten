@@ -21,7 +21,7 @@ port=${1:-${SETUP_SSH_PORT:-$default_ssh_port}}; integer "$port" PORT
 try shift
 auth_pubkeys=("${SETUP_SSH_AUTH_PUBKEYS[@]}")
 if (($#)); then auth_pubkeys=("$@"); fi
-if ! ((${#auth_pubkeys})); then argument "" AUTH_PUBKEYS; fi
+if ! ((${#auth_pubkeys[@]})); then argument "" AUTH_PUBKEYS; fi
 
 # -----------------------------------------------------------------------------
 
