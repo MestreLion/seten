@@ -25,6 +25,7 @@ if ! [[ -v SETUP_USERDIRS_HIDE ]]; then SETUP_USERDIRS_HIDE=(TEMPLATES PUBLICSHA
 merge_dirs() {
 	local tag=$1
 	local source; source=$(xdg-user-dir "$tag")
+	local rsync_opts=()
 	# Skip if it does not exist, or already a symlink, or set to $HOME
 	if [[ ! -e "$source" || -h "$source" || "$source" == "$HOME" ]]; then
 		return
@@ -43,7 +44,11 @@ merge_dirs() {
 	fi
 	message "Move content and symlink: $source	->	$target"
 	setup_run mkdir -p -- "$target"
-	setup_run rsync -qaSh --progress --remove-source-files -- \
+	if ! [[ "$(df --output=fstype "$target" | tail -n -1)" == ext4 ]]; then
+		# Disable permission setting for non-EXT4 partitions (FAT/NTFS/etc)
+		rsync_opts+=(--no-p --no-g)
+	fi
+	setup_run rsync -qaSh "${rsync_opts[@]}" --progress --remove-source-files -- \
 		"${source%/}/" "${target%/}/"
 	setup_run find "$source" -type d -empty -delete
 	if [[ -e "$source" ]]; then
