@@ -27,11 +27,19 @@ if (($#)); then auth_pubkeys=("$@"); fi
 
 # Will be used by both authorized keys (read) and SSH Setup (delete)
 rootkeys=/root/.ssh/authorized_keys  # better not use $HOME, if sudo without -H
+sshdir=$HOME/.ssh
+userkeys=$sshdir/authorized_keys
+keyfile=$sshdir/id_ed25519
 
 #------------------------------------------------------------------------------
 
 message 'Install OpenSSH Server'
 install_package openssh-server ssh-import-id
+
+if ! [[ -r "$keyfile" ]]; then
+	message 'Create SSH key (ED25519)'
+	ssh-keygen -a 100 -t ed25519 -f "$keyfile"
+fi
 
 message 'Add authorized SSH keys'
 add_ssh_key() {
@@ -46,8 +54,6 @@ add_ssh_key() {
 }
 
 # Create user SSH paths, if needed
-sshdir="$HOME"/.ssh
-userkeys=$sshdir/authorized_keys
 if ! [[ -d "$sshdir"   ]]; then mkdir --parents --mode 0700 -- "$sshdir"; fi
 if ! [[ -r "$userkeys" ]]; then touch -- "$userkeys"; chmod 0600 -- "$userkeys"; fi
 
