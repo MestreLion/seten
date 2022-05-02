@@ -21,7 +21,7 @@ port=${1:-${SETUP_SSH_PORT:-$default_ssh_port}}; integer "$port" PORT
 try shift
 auth_pubkeys=("${SETUP_SSH_AUTH_PUBKEYS[@]}")
 if (($#)); then auth_pubkeys=("$@"); fi
-if ! ((${#auth_pubkeys[@]})); then argument "" AUTH_PUBKEYS; fi
+#if ! ((${#auth_pubkeys[@]})); then argument "" AUTH_PUBKEYS; fi
 
 # -----------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ message 'Add authorized SSH keys'
 add_ssh_key() {
 	local key=${1:-}
 	local path=${2:-}
+	# Check if key is not a duplicate and is valid
 	if ! grep -Fxq -- "$key" "$path" 2>/dev/null &&
 		ssh-keygen -l -f <(echo "$key") &>/dev/null
 	then
