@@ -76,7 +76,7 @@ message 'Setup SSH'
 # - Disable SSH password login for all users
 # - Extend timeout to 120s * 720 = 24h
 # - Disable X11 Forwarding
-# - Allow SSH tunneling
+# - Allow SSH tunneling (disabled)
 configdir=/etc/ssh/sshd_config.d
 sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	# By ${SETUP_NAME}
@@ -103,7 +103,7 @@ sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	X11Forwarding no
 
 	# Allow SSH tunneling
-	GatewayPorts yes
+	#GatewayPorts yes
 EOF
 
 # Change listening port
