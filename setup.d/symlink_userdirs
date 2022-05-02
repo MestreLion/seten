@@ -87,4 +87,13 @@ for tag in "${SETUP_USERDIRS_HIDE[@]}"; do
 	fi
 	hide_path "$path"
 done
-hide_path "$HOME/examples.desktop"  # Not in Ubuntu 20.04 anymore
+
+paths=(
+	"$HOME/examples.desktop"  # Not in Ubuntu 20.04 anymore
+	"$HOME/snap"
+	"$basedir/\$RECYCLE.BIN"
+	"$basedir/System Volume Information"
+)
+for path in "${paths[@]}"; do
+	hide_path "$path"
+done
