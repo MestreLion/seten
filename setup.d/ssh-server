@@ -30,6 +30,9 @@ rootkeys=/root/.ssh/authorized_keys  # better not use $HOME, if sudo without -H
 
 #------------------------------------------------------------------------------
 
+message 'Install OpenSSH Server'
+install_package openssh-server ssh-import-id
+
 message 'Add authorized SSH keys'
 add_ssh_key() {
 	local key=${1:-}
