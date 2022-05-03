@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+
+# Replace Firefox snap with a DEB packaging from Mozilla Team PPA
+# Due to snap containment, some software such as gnome extensions and warsaw
+#  do not work with the Snap version
+# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
+
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Firefox DEB package from Mozilla Team PPA'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+message "Add Mozilla Team PPA"
+setup_run sudo add-apt-repository --yes --enable-source "ppa:mozillateam/ppa"
+
+message "Pin origin and allow unattended upgrades"
+origin=LP-PPA-mozillateam  # from Origin field in repository Release file
+cat <<-EOF | sudo tee /etc/apt/preferences.d/firefox-ppa-pin
+	# Created by ${SETUP_NAME}
+	# https://github.com/MestreLion/seten
+
+	# Pin the Mozilla Team PPA for firefox, DEB package
+	# So it trumps the firefox from Ubuntu that installs the Snap package
+	# https://launchpad.net/~mozillateam/+archive/ubuntu/ppa
+
+	# See also:
+	# /etc/apt/apt.conf.d/51unattended-upgrades-firefox-ppa
+	# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
+	# https://manpages.debian.org/unstable/apt/apt_preferences.5.en.html
+
+	# "Disable" all other packages from this PPA by setting the lowest priority
+	Package: *
+	Pin: release o=${origin}
+	Pin-Priority: 1
+
+	# Enable firefox over all other repositories
+	# Priority > 1000: allow downgrades, allow non-target
+	Package: firefox*
+	Pin: release o=${origin}
+	Pin-Priority: 1001
+EOF
+cat <<-EOF | sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox-ppa
+	# Created by ${SETUP_NAME}
+	# https://github.com/MestreLion/seten
+
+	# Allow unattended upgrades for Mozilla Team PPA
+	# See also /etc/apt/preferences.d/firefox-ppa-pin
+
+	Unattended-Upgrade::Allowed-Origins:: "${origin}:\${distro_codename}";
+EOF
+
+if package_installed firefox && { package_version firefox | grep -q snap; }; then
+	message "Remove DEB package from Ubuntu's apt repository (Snap wrapper)"
+	# Firefox in Ubuntu's apt repository is a wrapper for the snap
+	setup_run sudo apt purge firefox
+fi
+
+if snap list firefox &>/dev/null; then
+	message "Remove Firefox Snap"
+	setup_run sudo snap remove firefox
+fi
+
+message "Install Firefox from Mozilla Team PPA"
+install_package firefox
