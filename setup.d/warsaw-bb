@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+
+# Módulo de Segurança Banco do Brasil (internet banking)
+
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Warsaw for Banco do Brasil internet banking'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+deb=warsaw_setup64.deb
+dir=$(xdg-user-dir DOWNLOAD)
+file=${dir}/${deb}
+
+# -----------------------------------------------------------------------------
+
+checksum() { { sha256sum -- "$1" 2>/dev/null || echo; } | cut -d' ' -f1; }
+
+# -----------------------------------------------------------------------------
+
+sum=$(checksum "$file")
+
+wget -N -P "$dir" -- "https://cloud.gastecnologia.com.br/bb/downloads/ws/$deb"
+
+if ! package_installed warsaw || [[ "$(checksum "$file")" != "$sum" ]] ; then
+	setup_run sudo dpkg -i -- "$file"
+	setup_run sudo apt install -f -y
+fi
