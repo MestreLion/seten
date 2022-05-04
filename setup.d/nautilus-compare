@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Install nautilus-compare via upstream (outdated) PPA'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+# nautilus-compare was removed from repositories before Ubuntu 18.04
+# There is an official PPA from Author, but only released to 18.04 and 20.04
+
+# https://launchpad.net/~boamaod/+archive/ubuntu/nautilus-compare
+
+# https://askubuntu.com/questions/1238078
+# https://bugs.launchpad.net/nautilus-compare/+bug/1770630
+# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=942772
+
+# -----------------------------------------------------------------------------
+
+suite=$SETUP_CODENAME
+url=https://ppa.launchpadcontent.net/boamaod/nautilus-compare/ubuntu
+if ! wget -O /dev/null --quiet -- "${url}/dists/${suite}/"; then
+	suite=focal  # latest Ubuntu it was released
+fi
+aptlist=/etc/apt/sources.list.d/boamaod-ubuntu-nautilus-compare-${suite}.list
+cat <<-EOF | sudo tee "$aptlist"
+	deb     ${url}/ ${suite} main
+	deb-src ${url}/ ${suite} main
+EOF
+sudo apt update
+install_package meld nautilus-compare
