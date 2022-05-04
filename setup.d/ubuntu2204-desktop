@@ -14,7 +14,6 @@ fi
 # -----------------------------------------------------------------------------
 
 repos=(
-	'ppa:boamaod/nautilus-compare'  # nautilus-compare, likely to be re-added to repos
 #	'ppa:deluge-team/stable'        # deluge, also in repos
 #	'ppa:pedrocastro/ppa'           # gnome-subtitles, also in repos
 #	'ppa:solaar-unifying/stable'    # solaar, also in repos
@@ -30,7 +29,6 @@ packages=(
 	gnome-subtitles         # Pulls libmono :-(
 	gparted
 	jq                      # JSON shell manipulation
-	nautilus-compare        # From PPA
 	pv                      # Nice shell/pipe progress bar
 	rdiff-backup            # backup-home
 	smartmontools           # SMART tools for command line
@@ -38,7 +36,7 @@ packages=(
 	ssh-server
 	trash-cli
 
-#	curl                    # default in ubuntu-* ?
+#	curl                    # surprinsingly not installed by default
 #	upnp-router-control     # Not in 20.04, may be back in 22.04
 #	jstest-gtk              # Consider flatpak: https://jstest-gtk.gitlab.io/
 #	virtualbox{,-ext-pack,-guest-additions-iso}  # add script to auto-accept license
