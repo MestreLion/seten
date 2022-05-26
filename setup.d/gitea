@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Gitea git server'
+ARGS='[REPO_DIR] [WORK_DIR] [USER]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+repos_dir=${1:-${SETUP_GITEA_REPO_DIR:-/srv/git}}; argument "$repos_dir" REPOS
+work_dir=${2:-${SETUP_GITEA_WORK_DIR:-${GITEA_WORK_DIR:-/var/lib/git}}}; argument "$work_dir" WORK_DIR
+user=${3:-${SETUP_GITEA_USER:-git}}; argument "$user" USER
+
+conf_dir=/etc/gitea
+base_url='https://dl.gitea.io/gitea'
+
+
+# -----------------------------------------------------------------------------
+
+# https://docs.gitea.io/en-us/install-from-binary/
+
+message "Create Gitea service user '${user}'"
+if ! user_exists "$user"; then
+	useropts=(
+		--system
+		--group
+		--gecos 'Git Version Control'
+		--home "$work_dir"/home
+		--shell /usr/sbin/nologin
+		--disabled-password
+	)
+	setup_run sudo useradd "${useropts[@]}" -- "$user"
+fi
+
+setup_run sudo -u "$user" mkdir -p "$work_dir"/{custom,data,log}
+setup_run sudo mkdir --mode 770 "$conf_dir"
+setup_run sudo chown root:"$user" "$conf_dir"
+# NOTE: /etc/gitea is temporary set with write rights for user git so that
+# Web installer could write configuration file. After installation is done,
+# it is recommended to set rights to read-only using:
+# chmod 750 /etc/gitea
+# chmod 640 /etc/gitea/app.ini
+
+download_latest() {
+	local outdir=$1
+	local user=${2:-}
+	local version; version=$(curl -LSs "$base_url"/version.json | cut -d\" -f6)
+	local arch; arch=$(arch); case "$arch" in
+		x86_64 ) arch=amd64;;
+		aarch64) arch=arm64;;
+	esac
+	urls=("$base_url"/gitea-"$version"-linux-"$arch"{,.xz}{,.{asc,sha256}})
+	local url; for url in "${urls[@]}"; do echo "$url"; done
+	local archive; archive=$(download "${urls[0]}" "$outdir" "$user")
+	local asc; sha=$(curl -LSs "${urls[1]}")
+	local sha; sha=$(curl -LSs "${urls[2]}")
+	setup_run sha256sum --check - <<< "${sha}  ${archive}" >&2
+	setup_run gpg --verify <(echo "$asc") "$archive" >&2
+	echo "$archive"
+}
+
+exec=$(download_latest "$work_dir" "$user")
+setup_run sudo chmod +x "$exec"
+
+# gpg --keyserver keys.openpgp.org --recv 7C9E68152594688862D62AF62D9AE806EC1592E2
+# gpg --verify gitea-1.15.6-linux-amd64.asc gitea-1.15.6-linux-amd64
+# Look for the text Good signature from "Teabot <teabot@gitea.io>" to assert a good
+# binary, despite warnings like This key is not certified with a trusted signature!
+
+
+
+#------------------------------------------------------------------------------
+
+
+
+
+export GITEA_WORK_DIR="$work_dir"/
+#cp gitea /usr/local/bin/gitea
+
+#https://raw.githubusercontent.com/go-gitea/gitea/main/contrib/systemd/gitea.service

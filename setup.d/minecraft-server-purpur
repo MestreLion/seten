@@ -1,0 +1,220 @@
+#!/bin/bash
+#
+# Minecraft Java Edition Server
+#
+# Copyright (C) 2020 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later, at your choice. See <http://www.gnu.org/licenses/gpl>
+#
+# TODO: use file socket for stdin: https://unix.stackexchange.com/a/612118/4919
+# TODO: explore alternatives: named pipes on stdin; tail -f | java, etc
+# TODO: FHS paths: server/$HOME in /usr/lib/minecraft, worlds in /var/minecraft/*
+# TODO: Multi-world: /var/minecraft/<name>, per-world server.properties (port, name, etc)
+#
+# References:
+# server.jar CLI:
+#   https://minecraft.fandom.com/wiki/Tutorials/Setting_up_a_server#Minecraft_options
+#   https://www.spigotmc.org/wiki/start-up-parameters/
+# vanilla server: https://launchermeta.mojang.com/mc/game/version_manifest.json
+# mcrcon: https://linuxize.com/post/how-to-install-minecraft-server-on-ubuntu-18-04/
+# ideas: https://minecraftservercontrol.github.io/docs/mscs
+#   multi-world (and multi-user)
+#   logrotate
+#   stdin: tail -f | java
+###############################################################################
+
+DESCRIPTION='Minecraft Java Purpur Server'
+ARGS='[DIR] [USER] [SEED] [JAVA_ARGS]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+include java
+
+#------------------------------------------------------------------------------
+
+SETUP_MINECRAFT_SERVER_JAVA_ARGS=(-Xmx4G -Xms4G)
+
+data_dir=${1:-${SETUP_MINECRAFT_SERVER_DIR:-/opt/minecraft-server}}; argument "$data_dir" DIR
+user=${2:-${SETUP_MINECRAFT_SERVER_USER:-minecraft}}; argument "$user" USER
+seed=${3:-${SETUP_MINECRAFT_SERVER_SEED:-1052397348887568626}}
+try shift 3
+java_args=("${SETUP_MINECRAFT_SERVER_JAVA_ARGS[@]}")
+if (($#)); then java_args=("$@"); fi
+
+
+#------------------------------------------------------------------------------
+
+url='https://www.minecraft.net/en-us/download/server'
+service=minecraft.service
+
+launcher=$data_dir/minecraft-server.sh
+eula=$data_dir/eula.txt
+props=$data_dir/server.properties
+java_home=$data_dir/java
+
+#------------------------------------------------------------------------------
+
+
+if ! user_exists "$user"; then
+	message 'Create Minecraft Server service user'
+	# FIXME: Why useradd instead of adduser?
+	useropts=(
+		--system
+		--shell /usr/sbin/nologin
+		--home-dir "$data_dir"
+		--create-home --skel ""
+		--comment "Minecraft Java Server"
+	)
+	setup_run sudo useradd "${useropts[@]}" -- "$user"
+	#mkdir --parents "$data_dir"
+	#chown "$user": -- "$data_dir"
+fi
+
+message 'Download and extract latest OpenJDK Java'
+#setup_run sudo_for "$java_home" rm -rf -- "$java_home"/*
+setup_run sudo_for "$java_home" -u "$user" mkdir --parents -- "$java_home"
+archive=$(java_download_latest_openjdk "$java_home")
+setup_run sudo_for "$java_home" -u "$user" tar -xf "$archive" -C "$java_home" --strip-components=1
+#setup_run sudo_for "$archive" rm -- "$archive"
+
+message 'Download latest Purpur Server'
+jar=$(download "$(scrape_urls 'https://purpur.pl3x.net/' 'latest/download')" "$data_dir" "$user")
+exec=("$java_home"/bin/java "${java_args[@]}" -jar "$jar" --nogui)  # --world-dir "$data_dir"
+exit
+
+message 'Initial run to set up config'
+# Run once to generate eula.txt and server.properties
+# It may emit warnings and errors on first run (files not found)
+# and fail on subsequent re-runs (dir is owned by minecraft), that's expected.
+if [[ ! -f "$props" ]] || [[ ! -f "$eula" ]]; then
+	cd -- "$data_dir"
+	sudo -u "$user" "${exec[@]}" --initSettings
+fi
+
+if [[ ! -f "$props" ]]; then fatal "server failed to create config files"; fi
+
+# Patch EULA
+echo  # that's intentional!
+bold "$(head -n1 -- "$eula")"
+echo  # and so is this
+if ((SETUP_INTERACTIVE)); then
+	if ! confirm "Have you read and agreed with Minecraft EULA?"; then
+		fatal "Cancelled by user"
+	fi
+fi
+sudo_for "$eula" sed -i '/^eula=false/s/false/TRUE/g' -- "$eula" 2>/dev/null ||
+echo 'eula=TRUE' >> "$eula"
+
+# Patch Server Properties
+if [[ "$seed" ]] && grep -Fxq -- 'level-seed=' "$props"; then
+	bak=$(bakfile "$props")
+	backup_file "$props" "$bak"
+	awk -v s="$seed" -- \
+		'/level-seed=/{sub(/=/, "=" s)}{print}' \
+		"$bak" > "$props"
+fi
+
+
+message "Grant ownership to '${user}'"
+sudo_for "$data_dir" chown --recursive "$user": -- "$data_dir"
+
+
+message 'Setup Firewall'
+ports=$(awk -F= -v ORS=, '$1~/[-.]port$/{print $2}' "$props")
+# FIXME: GameSpy4 Query port is for UDP, not TCP
+mkdir -p -- /etc/ufw/applications.d
+cat > /etc/ufw/applications.d/minecraft.conf <<-EOF
+	[Minecraft]
+	title=Minecraft Server (Purpur + RCON + GameSpy4 Query)
+	description=Minecraft: Java Edition Purpur Server
+	ports=${ports::-1}/tcp
+EOF
+if exists ufw; then
+	ufw allow Minecraft
+	ufw reload
+fi
+
+message 'Create launcher'
+sudo_for "$launcher" tee "$launcher" <<-EOF
+	#!/bin/sh
+	#
+	# By ${SETUP_NAME}
+	# https://github.com/MestreLion/seten
+	#
+	# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+	# License: GPLv3 or later, at your choice. See <http://www.gnu.org/licenses/gpl>
+
+	mydir=\$(dirname "\$(readlink -f "\$0")")
+	myname=\${0##*/}
+	stdin=$XDG_RUNTIME_DIR/stdin
+
+	send() {
+	}
+
+	if [ "\$1" = "--help" ]; then
+		echo "Minecraft Java Edition Purpur Server"
+		echo "Usage: \$myname [--stop]"
+		echo "Service: sudo systemctl start ${service}"
+		exit
+	fi
+
+	if [ "\$1" = "--stop" ]; then
+		screen -S minecraft -X stuff "say SERVER SHUTTING DOWN IN 5 SECONDS...\n"
+		sleep 5
+		screen -S minecraft -X stuff "stop\n"
+		exit
+	fi
+
+	cd "\$mydir"
+	exec "${exec[@]}" "\$@"
+EOF
+chmod +x "$launcher"
+
+# "Touch" /run/screen
+#mkdir -p -m 777 /run/screen
+#chmod 777 /run/screen
+#sudo -u minecraft screen -DmS minecraft -- true
+
+message 'Create, enable and start Minecraft Server systemd service'
+cat > /etc/systemd/system/"$service" <<-EOF
+	[Unit]
+	Description=Minecraft Java Server
+	Documentation=https://github.com/MestreLion/seten
+	Wants=network-online.target
+	After=network-online.target
+	# AssertPathExists=${jar}
+
+	[Service]
+	Type=exec
+	User=minecraft
+	Group=minecraft
+	WorkingDirectory=~
+	StandardInput=file:stdin
+
+	# https://www.freedesktop.org/software/systemd/man/systemd.exec.html#Sandboxing
+	NoNewPrivileges=true
+	ProtectHome=true
+	PrivateDevices=true
+	PrivateTmp=true
+	PrivateUsers=true
+	ProtectSystem=strict
+	# ReadWriteDirectories=$(printf '%q' "$data_dir")
+
+	Restart=on-failure
+	RestartSec=5
+	# KillMode=none
+
+	# ExecStartPre=/usr/bin/mkfifo ./daemon.in
+	ExecStop=$(printf '%q' "$launcher") stop
+	ExecStart=$(printf '%q' "$launcher")
+
+	[Install]
+	WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+try systemctl stop "$service"
+systemctl enable "$service"
+systemctl start "$service"
