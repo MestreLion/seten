@@ -1,10 +1,11 @@
 #!/bin/bash -Eeu
-
+#
 # Setup system to send email through Gmail / Google Apps account
 #
 # sendmail may be one of its wrappers: ssmtp, msmtp, or even postfix itself
 # https://binfalse.de/2020/02/17/migrating-from-ssmtp-to-msmtp/
-
+#
+# Great reference: https://wiki.archlinux.org/title/msmtp
 # -----------------------------------------------------------------------------
 
 config=/etc/msmtprc
@@ -22,6 +23,8 @@ fi
 
 # -----------------------------------------------------------------------------
 
+# Do not use account password, instead create an app password
+# https://myaccount.google.com/apppasswords
 ACCOUNT=${1:-${SETUP_GMAIL_ACCOUNT:-}}
 PASSWORD=${2:-${SETUP_GMAIL_PASSWORD:-}}
 MAILDOMAIN=${3:-${SETUP_GMAIL_MAILDOMAIN:-${ACCOUNT##*@}}}
@@ -39,6 +42,8 @@ fi
 
 # Create aliases file (so email sent TO local users can be delivered)
 sudo tee /etc/aliases >/dev/null <<-EOF
+	# Created by ${0##*/}
+	# Email sent TO local users are replaced by the respective recipients
 	# Trailing '@' needed for msmtp < 1.8.6, released 2019-09-27
 	# https://unix.stackexchange.com/a/531586/4919
 	root: root.${FROM}
@@ -161,11 +166,15 @@ sudo tee "$config" >/dev/null <<-EOF
 	host ${SMTPHOST}
 	auth on
 	user ${ACCOUNT}
+	# Do not use account password, instead create an app password
+	# https://myaccount.google.com/apppasswords
 	passwordeval base64 -d $(printf '%q' "${passfile}")
 	domain ${EHLODOMAIN}
-	#from ${FROM}
+	# Choose 'auto_from on' + 'maildomain' OR fixed 'from'
 	auto_from on
 	maildomain ${MAILDOMAIN}
+	#from ${FROM}
 	aliases /etc/aliases
+
 	account default : gmail
 EOF
