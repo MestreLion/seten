@@ -149,7 +149,6 @@ else
 		ports=${port}/tcp
 	EOF
 	sudo ufw allow SSH
-	sudo ufw reload
 fi
-
+try sudo ufw reload >/dev/null
 sudo systemctl reload ssh
