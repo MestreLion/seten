@@ -95,9 +95,9 @@ message "Enable extra repositories"
 for repo in "${SETUP_REPOSITORIES[@]}"; do
 	setup_run sudo add-apt-repository -y --no-update "$repo"
 done
-setup_run sudo apt update
 
 message "Upgrade packages"
+setup_run sudo apt update
 setup_run sudo apt -y full-upgrade
 
 message "Install extra packages"
