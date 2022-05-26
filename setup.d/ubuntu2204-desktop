@@ -21,22 +21,23 @@ repos=(
 
 packages=(
 	apt-rdepends            # apt-tree
-	exfat-utils             # exFAT for GPT partitions over 2TB (PS4)
+	curl                    # surprisingly not installed by default
 	default-jdk             # Java 11, will possibly be 17 (both LTS)
 	deluge                  # Torrent GUI client
+	{d,dpkg-,info2}www      # Docs on browser! Pulls apache2
+	exfat-utils             # full exFAT filesystem support (PS4, SD Cards)
 	git{,g,-restore-mtime}  # Bumping popcorn ;-)
 	gnome-cards-data        # For aisleriot
 	gnome-subtitles         # Pulls libmono :-(
 	gparted
 	jq                      # JSON shell manipulation
-	pv                      # Nice shell/pipe progress bar
+	pv                      # Nice shell/pipe progress bar, used by dd-status
 	rdiff-backup            # backup-home
 	smartmontools           # SMART tools for command line
 	solaar                  # Logitech Unifying Keyboard/Mouse receiver
 	ssh-server
 	trash-cli
 
-#	curl                    # surprinsingly not installed by default
 #	upnp-router-control     # Not in 20.04, may be back in 22.04
 #	jstest-gtk              # Consider flatpak: https://jstest-gtk.gitlab.io/
 #	virtualbox{,-ext-pack,-guest-additions-iso}  # add script to auto-accept license
