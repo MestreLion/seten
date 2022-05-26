@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+#
+# https://www.netdata.cloud/agent
+# https://learn.netdata.cloud/docs/agent/packaging/installer/methods/kickstart
+
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Netdata'
+ARGS='[CLAIM_TOKEN] [CLAIM_ROOMS] [CLAIM_URL]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+claim_token=${1:-${SETUP_NETDATA_CLAIM_TOKEN:-}}
+claim_rooms=${2:-${SETUP_NETDATA_CLAIM_ROOMS:-}}
+claim_url=${3:-${SETUP_NETDATA_CLAIM_URL:-https://app.netdata.cloud}}
+
+# -----------------------------------------------------------------------------
+
+#if exists netdata; then exit; fi
+
+script=$(mktemp --directory)/netdata-kickstart.sh || fatal "could not create temp dir"
+trap 'rm -rf -- "${script%/*}"' EXIT
+
+opts=(
+	--stable-channel   # instead of the default --nightly-channel
+	--no-updates       # no cron for apt upgrade, this is a task for the OS
+	--native-only      # only install DEB packages, fail if not available
+)
+if [[ "$claim_token" ]]; then opts+=(--claim-token "$claim_token"); fi
+if [[ "$claim_rooms" ]]; then opts+=(--claim-rooms "$claim_rooms"); fi
+if [[ "$claim_url"   ]]; then opts+=(--claim-url   "$claim_url"); fi
+
+
+# In the end, for Ubuntu this merely installs netdata-repo.deb which sets up
+# the debian repository at https://packagecloud.io/netdata/netdata and then
+# installs the netdata .deb package
+wget -O "$script" https://my-netdata.io/kickstart.sh &&
+	sh "$script" "${opts[@]}"
