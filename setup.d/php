@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+
+# TODO: Performance tunning for low-trafic, low-resources server:
+# /etc/php/7.4/fpm/pool.d/www.conf
+# 	pm = dynamic => ondemand; Do not spawn children at start, kill idle
+# 	;pm.process_idle_timeout = 10s; => 600s;  # 10 minutes
+# TODO: Consider supporting socket-activation
+# https://freedesktop.org/wiki/Software/systemd/DaemonSocketActivation
+# But it might have some cons, see this:
+# https://www.google.com/search?q=%22changing%22+php-fpm+socket-activated
+
 # -----------------------------------------------------------------------------
 
 DESCRIPTION='PHP FPM (FastCGI Process Manager)'
@@ -35,7 +45,8 @@ fi
 # For reference:
 #   7.2 in Ubuntu 18.04
 #   7.4 in Ubuntu 20.04
-#   libapache2-mod-php7.* for non-fpm Apache PHP module
+#   8.1 in Ubuntu 22.04
+#   libapache2-mod-php for non-fpm Apache PHP module
 packages=(php-fpm "${SETUP_PHP_MODULES[@]}" "$@")
 
 # -----------------------------------------------------------------------------
