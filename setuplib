@@ -55,7 +55,6 @@ include-config() {
 		fi
 
 		pushd "$(dirname "$config")" >/dev/null
-		debugmsg "sourcing config: ${PWD}/${config}"
 		# shellcheck source=seten.template.conf
 		source "$(basename "$config")"
 		popd >/dev/null
