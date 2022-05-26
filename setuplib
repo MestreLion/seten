@@ -82,6 +82,9 @@ SETUP_USER=${SETUP_USER:-${USER,,}}
 SETUP_USERNAME=${SETUP_USERNAME:-$(username)}
 SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/lib"}
 
+# Intentionally not configurable
+SETUP_WEBSITE='https://github.com/MestreLion/seten'
+
 #------------------------------------------------------------------------------
 # Platform info
 

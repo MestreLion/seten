@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+#
+# To list bans:
+# sudo fail2ban-client status sshd
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Fail2Ban'
+ARGS='[SSH_PORT]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+default_ssh_port=22
+port=${1:-${SETUP_SSH_PORT:-$default_ssh_port}}; integer "$port" PORT
+
+# -----------------------------------------------------------------------------
+
+message 'Enable Firewall and add rule for SSH'
+config=/etc/ufw/applications.d/ssh."$SETUP_SLUG".conf
+if [[ "$port" == "$default_ssh_port" ]]; then
+	sudo ufw allow OpenSSH
+else
+	sudo tee "$config" <<-EOF
+		# Created by ${SETUP_NAME}
+		[SSH]
+		title=${SETUP_NAME} SSH custom port
+		description=OpenSSH service on port ${port}
+		ports=${port}/tcp
+	EOF
+	sudo ufw allow SSH
+fi
+try sudo ufw reload >/dev/null
+sudo ufw enable
+
+message 'Install Fail2Ban'
+install_package fail2ban
+
+message 'Configure Fail2Ban'
+config=/etc/fail2ban/jail.d/${SETUP_SLUG}.conf
+sudo tee "$config" <<-EOF
+	# Created by ${SETUP_NAME} ${SETUP_WEBSITE}
+	[DEFAULT]
+	# Default: 10 minutes
+	bantime = 10d
+	# Default: 10 minutes
+	findtime = 30m
+	# Default: 5
+	maxretry = 3
+
+	[sshd]
+	# Already enabled by defaults-debian.conf
+	enabled = true
+	# Default: ssh (==22)
+	port = ${port}
+EOF
+sudo systemctl restart fail2ban
