@@ -18,9 +18,9 @@ _seten_setup() {
 	local SETUP_DIR=@@SETUP_DIR@@
 
 	# shellcheck disable=SC2016,SC2207,SC2086
-	# TODO: Show executables (and dirs) only!
 	COMPREPLY=($(compgen -W \
-		'$(command ls -I "*.*" -I template "$SETUP_DIR"/setup.d)' \
+		'$(command find "$SETUP_DIR"/setup.d -type f -executable \
+			! -name template ! -name "*.*" -printf "%P\n")' \
 		-- $cur))
 } &&
 	complete -F _seten_setup @@SETUP_SLUG@@
