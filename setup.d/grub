@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Grub Multiboot'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+confdir=/etc/default/grub.d
+
+message "Remember last boot selection"
+conf=${confdir}/remember-last-boot.cfg
+if ! [[ -e "$conf" ]]; then
+	setup_run sudo tee "$conf" <<-EOF
+		# Added by ${SETUP_NAME}
+		# Remember last boot selection
+		GRUB_DEFAULT=saved
+		GRUB_SAVEDEFAULT=true
+	EOF
+fi
+
+message "Decrease timeout to 3 seconds"
+conf=${confdir}/set-timeout.cfg
+if ! [[ -e "$conf" ]]; then
+	setup_run sudo tee "$conf" <<-EOF
+		# Added by ${SETUP_NAME}
+		# Set timeout to 3 seconds
+		GRUB_TIMEOUT=3
+	EOF
+fi
+
+message "Update Grub"
+setup_run sudo update-grub
