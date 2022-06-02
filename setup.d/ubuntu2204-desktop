@@ -32,6 +32,7 @@ packages=(
 	gparted
 	jq                      # JSON shell manipulation
 	pv                      # Nice shell/pipe progress bar, used by dd-status
+	python3-pip             # enable python3 -m pip
 	rdiff-backup            # backup-home
 	smartmontools           # SMART tools for command line
 	solaar                  # Logitech Unifying Keyboard/Mouse receiver
