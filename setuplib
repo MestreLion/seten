@@ -185,7 +185,24 @@ debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
 user_home()   { getent passwd "${1:-$USER}" | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
-user_exists() { id "${1:-}" &>/dev/null; }
+user_exists() { getent passwd "${1:-}" >/dev/null; }  # id "${1:-}" &>/dev/null
+group_exists(){ getent group  "${1:-}" >/dev/null; }
+create_system_user() {
+	local user=$1
+	local name=${2:-}
+	message "Create system user '$user'"
+	# if user_exists "$user"; then return; fi
+	useropts=(
+		--system  # implies --shell /usr/sbin/nologin
+		--group   # create its group, otherwise system users are put in nogroup
+		--quiet   # no error if system user already exists
+		--home "/var/lib/${user}"  # default /home/<USER> even for system
+	)
+	if [[ "$name" ]]; then
+		useropts+=( --gecos "$name" )
+	fi
+	setup_run sudo adduser "${useropts[@]}" -- "$user"
+}
 
 now()     { date +%Y%m%d%H%M%S; }
 bakfile() { echo "${1:-}.${SETUP_SLUG}.$(now).bak"; }
@@ -205,6 +222,16 @@ backup_file() {
 	fi
 	setup_run sudo_for "$target" cp -p --no-clobber -- "$source" "$target"
 }
+
+create_temp_dir() {
+	# Usage: create_temp_dir; ... "$TEMP_DIR" ...
+	# Last created dir is assigned to TEMP_DIR
+	# Do NOT use in a subshell!
+	TEMP_DIR=$(mktemp --directory) || fatal "could not create temp dir"
+	declare -ga _TEMP_DIRS; _TEMP_DIRS+=( "$TEMP_DIR" )
+	trap 'rm -rvf -- "${_TEMP_DIRS[@]}"' EXIT
+}
+
 sudo_for() {
 	local path=$1; shift
 	if ! [[ -e "$path" ]]; then
