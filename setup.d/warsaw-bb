@@ -35,3 +35,7 @@ if ! package_installed warsaw || [[ "$(checksum "$file")" != "$sum" ]] ; then
 	setup_run sudo dpkg -i -- "$file"
 	setup_run sudo apt install -f -y
 fi
+
+# if there are errors on enabling/disabling with systemctl:
+# sudo update-rc.d warsaw defaults-disabled
+# sudo update-rc.d warsaw defaults
