@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='SmartCronHelper, a healthchecks.io client'
+ARGS='API_KEY [API_URL] [SOURCE] [USER]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+api_key=${1:-${SETUP_HEALTHCHECKS_API_KEY:-}}; argument "$api_key" API_KEY
+api_url=${2:-${SETUP_HEALTHCHECKS_API_URL:-"https://healthchecks.io/api/v1/"}}
+source=${3:-${SETUP_HEALTHCHECKS_SOURCE:-"sch"}}
+group=${4:-${SETUP_HEALTHCHECKS_GROUP:-"monitor"}}
+
+path=/usr/local/lib/sch
+bin=${path}/bin/sch
+target=/usr/local/bin/sch
+
+# -----------------------------------------------------------------------------
+
+message "Install dependencies"
+install_package git python3-pip
+
+message "Install environment at $path"
+setup_run sudo -H python3 -m venv -- "$path"
+setup_run sudo -H "$path"/bin/pip install --upgrade pip wheel
+
+message "Install client $source"
+setup_run sudo -H "$path"/bin/pip install --upgrade "$source"
+
+message "Install executable $target"
+setup_run rm -f "$target" && setup_run sudo ln -s -- "$bin" "$target"
+
+message "Create system group $group and add yourself to it"
+setup_run sudo addgroup --system --quiet -- "$group"
+setup_run sudo adduser -- "$USER" "$group"
+
+config=/etc/sch.conf
+message "Create config file $config"
+cat <<-EOF | setup_run sudo -u root -g "$group" tee -- "$config"
+	[hc]
+	healthchecks_api_url = ${api_url}
+	healthchecks_api_key = ${api_key}
+
+	[sch]
+	loglevel = WARNING
+EOF
+setup_run sudo_for "$config" chmod 640 -- "$config"
+
+message "To enable monitoring jobs, add to 'crontab -e' or /etc/cron.d:"
+cat <<-EOF
+	# MUST be absolute path, even if it's in \$PATH!
+	SHELL=$(escape "$target")
+
+	# Job description (will be parsed)
+	* * * * *  JOB_ID=foobar  cmd args...  # inline comments also parsed!
+EOF
