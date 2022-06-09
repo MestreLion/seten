@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Kernel extra modules installed via DKMS:
+# asus-wmi-sensors	Asus Motherboard	https://github.com/electrified/asus-wmi-sensors
+# amdgpu	AMD GPU	https://www.amd.com/en/support/graphics/radeon-rx-vega-series/radeon-rx-vega-series/radeon-rx-vega-56
+# virtualbox	Virtualbox	sudo apt install virtualbox
+# bcmwl	TP Link WiFi Adapter	sudo apt install  (or broadcom-sta-dkms)
+
 repos=(
 	universe
 	ppa:pedrocastro/ppa  # Gnome Subtitles. Deleted from 18.04, back in 18.10

@@ -1,6 +1,8 @@
 #!/bin/bash -e
 
 # Motherboard Asus ROG Stryx X470-F Gaming
+# https://github.com/electrified/asus-wmi-sensors
+# No longer needed as of linux kernel 5.17 (Ubuntu 22.04.1)
 
 # -----------------------------------------------------------------------------
 
