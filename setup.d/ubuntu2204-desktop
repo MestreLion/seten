@@ -21,6 +21,7 @@ repos=(
 
 packages=(
 	apt-rdepends            # apt-tree
+	cockpit                 # Systemd admin web service
 	curl                    # surprisingly not installed by default
 	default-jdk             # Java 11, will possibly be 17 (both LTS)
 	deluge                  # Torrent GUI client
