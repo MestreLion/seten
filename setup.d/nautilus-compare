@@ -30,10 +30,5 @@ url=https://ppa.launchpadcontent.net/boamaod/nautilus-compare/ubuntu
 if ! wget -O /dev/null --quiet -- "${url}/dists/${suite}/"; then
 	suite=focal  # latest Ubuntu it was released
 fi
-aptlist=/etc/apt/sources.list.d/boamaod-ubuntu-nautilus-compare-${suite}.list
-cat <<-EOF | sudo tee "$aptlist"
-	deb     ${url}/ ${suite} main
-	deb-src ${url}/ ${suite} main
-EOF
-sudo apt update
+sudo apt-add-repository --yes --enable-source --ppa "deb ${url}/ ${suite} main"
 install_package meld nautilus-compare
