@@ -85,18 +85,7 @@ if ! grep -q "\$SCRIPTS" "$HOME"/.bashrc 2>/dev/null ; then
 	_EOF_
 fi
 
-# custom bash_completion
-if ! grep -q "\$SCRIPTS" "$HOME"/.bash_completion 2>/dev/null ; then
-	cat >> "$HOME"/.bash_completion <<-_EOF_
-
-		# Added by $myname
-		if [ -f "\$SCRIPTS/home/bash_completion" ] ; then
-		    . "\$SCRIPTS/home/bash_completion"
-		fi
-	_EOF_
-fi
-
-# personal bin
+# Create personal bin dir, so default ~/.profile adds it to $PATH
 mkdir -p "$HOME/.local/bin"
 
 # Nautilus scripts
