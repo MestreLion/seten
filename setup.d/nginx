@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Nginx Stable from nginx.org upstream repository'
+ARGS='[OPT_ARG1]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+# https://nginx.org/en/linux_packages.html#Ubuntu
+
+key=/usr/share/keyrings/nginx-archive-keyring.gpg
+url=https://nginx.org/en/linux_packages.html#Ubuntu
+repo=http://nginx.org/packages/ubuntu
+
+# -----------------------------------------------------------------------------
+
+message "Install dependencies"
+# Most installed by default. Changed to gnupg instead of transitional gnupg2
+install_package curl gnupg ca-certificates lsb-release ubuntu-keyring
+
+message "Add Nginx.org signing key, confirm fingerprint matches $url"
+curl -Ss https://nginx.org/keys/nginx_signing.key | gpg --dearmor |
+	setup_run sudo tee -- "$key" >/dev/null
+# Just for visual confirmation:
+gpg --dry-run --quiet --import --import-options import-show "$key"
+
+message "Add Nginx.org APT repository and pin it"
+setup_run sudo tee /etc/apt/sources.list.d/nginx-mainline.list <<-EOF
+	deb [arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] $repo ${SETUP_CODENAME} nginx
+EOF
+setup_run sudo tee /etc/apt/preferences.d/nginx-apt-repo-pin <<-EOF
+	Package: *
+	Pin: origin nginx.org
+	Pin: release o=nginx
+	Pin-Priority: 900
+EOF
+
+message "Install Nginx"
+setup_run sudo apt update
+install_package nginx
