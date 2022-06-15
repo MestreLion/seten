@@ -31,7 +31,7 @@ if ! [[ -v SETUP_PACKAGES     ]]; then SETUP_PACKAGES=(); fi
 #------------------------------------------------------------------------------
 
 execdir=$BIN_HOME  # TODO: add SETUP_PREFIX to allow system-wide install
-bashcompdir=${BASH_COMPLETION_USER_DIR:-"${DATA_HOME}/bash-completion/completions"}
+bashcompdir=${BASH_COMPLETION_USER_DIR:-${DATA_HOME}/bash-completion}/completions
 
 execfile=$execdir/$SETUP_SLUG
 bashcompfile=$bashcompdir/$SETUP_SLUG
