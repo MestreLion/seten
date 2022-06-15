@@ -79,7 +79,8 @@ message 'Setup SSH'
 # - Allow SSH tunneling (disabled)
 configdir=/etc/ssh/sshd_config.d
 sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
-	# By ${SETUP_NAME}
+	# Created by ${SETUP_NAME}
+	# ${SETUP_WEBSITE}
 
 	# Disable SSH login for root
 	PermitRootLogin no
@@ -109,9 +110,10 @@ EOF
 # Change listening port
 if [[ "$port" != "$default_ssh_port" ]]; then
 	message "Change listening port to ${port}"
-	sudo tee "$configdir"/50-"$SETUP_SLUG"-port.conf <<-EOF
-		# By ${SETUP_NAME}
-		# Change listening port
+	sudo tee "$configdir"/50-"$SETUP_SLUG"-custom_port.conf <<-EOF
+		# Created by ${SETUP_NAME}
+		# ${SETUP_WEBSITE}
+		# Change listening port. Default is ${default_ssh_port}
 		Port ${port}
 	EOF
 fi
@@ -128,6 +130,7 @@ if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
 
 
 	# Added by ${SETUP_NAME}
+	# ${SETUP_WEBSITE}
 	# Disable remote login for root, including SSH
 	${setting}
 	EOF
@@ -139,12 +142,13 @@ try sudo mv -- "$rootkeys" "$(bakfile "$rootkeys")"
 
 message 'Enable Firewall rule for SSH'
 if [[ "$port" == "$default_ssh_port" ]]; then
-	sudo ufw allow OpenSSH
+	setup_run sudo ufw allow OpenSSH
 else
-	sudo tee /etc/ufw/applications.d/ssh."$SETUP_SLUG".conf <<-EOF
+	setup_run sudo tee /etc/ufw/applications.d/ssh-custom-port.conf <<-EOF
 		# Created by ${SETUP_NAME}
+		# ${SETUP_WEBSITE}
 		[SSH]
-		title=${SETUP_NAME} SSH custom port
+		title=SSH custom port
 		description=OpenSSH service on port ${port}
 		ports=${port}/tcp
 	EOF
