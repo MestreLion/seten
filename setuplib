@@ -84,7 +84,7 @@ SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/lib"}
 
 # Intentionally not configurable
 # shellcheck disable=SC2034
-# SETUP_WEBSITE='https://github.com/MestreLion/seten'
+SETUP_WEBSITE='https://github.com/MestreLion/seten'
 
 #------------------------------------------------------------------------------
 # Platform info
