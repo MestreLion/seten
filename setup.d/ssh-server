@@ -78,6 +78,23 @@ message 'Setup SSH'
 # - Disable X11 Forwarding
 # - Allow SSH tunneling (disabled)
 configdir=/etc/ssh/sshd_config.d
+
+# Until 20.04 Ubuntu had no drop-in config dir, so we create one if needed
+if ! [[ -d "$configdir" ]]; then
+	setup_run sudo mkdir -p -- "$configdir"
+	conf=${configdir}/sshd_config
+	setting='Include /etc/ssh/sshd_config.d/*.conf'
+	if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
+		backup_file "$conf"
+		setup_run sudo tee -a -- "$conf" <<-EOF
+
+		# Added by ${SETUP_NAME}
+		# ${SETUP_WEBSITE}
+		# Include configuration overrides in drop-in directory
+		${setting}
+		EOF
+	fi
+fi
 sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	# Created by ${SETUP_NAME}
 	# ${SETUP_WEBSITE}
