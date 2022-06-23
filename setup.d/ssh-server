@@ -90,16 +90,14 @@ if ! [[ -d "$configdir" ]]; then
 		backup_file "$conf"
 		setup_run sudo tee -a -- "$conf" <<-EOF
 
-		# Added by ${SETUP_NAME}
-		# ${SETUP_WEBSITE}
+		$(signature added)
 		# Include configuration overrides in drop-in directory
 		${setting}
 		EOF
 	fi
 fi
 setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
-	# Created by ${SETUP_NAME}
-	# ${SETUP_WEBSITE}
+	$(signature)
 
 	# Disable SSH login for root
 	PermitRootLogin no
@@ -133,8 +131,7 @@ EOF
 if [[ "$port" != "$default_ssh_port" ]]; then
 	message "Change listening port to ${port}"
 	setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-custom_port.conf <<-EOF
-		# Created by ${SETUP_NAME}
-		# ${SETUP_WEBSITE}
+		$(signature)
 		# Change listening port. Default is ${default_ssh_port}
 		Port ${port}
 	EOF
@@ -150,8 +147,7 @@ if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
 	backup_file "$conf"
 	setup_run sudo tee -a "$conf" <<-EOF
 
-	# Added by ${SETUP_NAME}
-	# ${SETUP_WEBSITE}
+	$(signature added)
 	# Disable remote login for root, including SSH
 	${setting}
 	EOF
@@ -166,8 +162,7 @@ if [[ "$port" == "$default_ssh_port" ]]; then
 	setup_run sudo ufw allow OpenSSH
 else
 	setup_run sudo tee /etc/ufw/applications.d/ssh-custom-port.conf <<-EOF
-		# Created by ${SETUP_NAME}
-		# ${SETUP_WEBSITE}
+		$(signature)
 		[SSH]
 		title=SSH custom port
 		description=OpenSSH service on port ${port}

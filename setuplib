@@ -85,6 +85,8 @@ SETUP_LIBS_DIR=${SETUP_LIBS_DIR:-"$(absdir "${BASH_SOURCE[0]}")/lib"}
 # Intentionally not configurable
 # shellcheck disable=SC2034
 SETUP_WEBSITE='https://github.com/MestreLion/seten'
+# shellcheck disable=SC2034
+SETUP_SCRIPT=${0##*/}
 
 #------------------------------------------------------------------------------
 # Platform info
@@ -244,6 +246,13 @@ create_temp_dir() {
 	TEMP_DIR=$(mktemp --directory) || fatal "could not create temp dir"
 	declare -ga _TEMP_DIRS; _TEMP_DIRS+=( "$TEMP_DIR" )
 	trap 'rm -rvf -- "${_TEMP_DIRS[@]}"' EXIT
+}
+
+signature() {
+	local action=${1:-created}
+	local comment=${2:-#}
+	echo "${comment} ${action^} by ${SETUP_NAME} ${SETUP_SCRIPT}"
+	echo "${comment} ${SETUP_WEBSITE}"
 }
 
 sudo_for() {
