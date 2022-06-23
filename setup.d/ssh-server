@@ -78,6 +78,7 @@ message 'Setup SSH'
 # - Extend timeout to 120s * 720 = 24h
 # - Disable X11 Forwarding
 # - Allow SSH tunneling (disabled)
+# - Disable Debian banner (disabled)
 configdir=/etc/ssh/sshd_config.d
 
 # Until 20.04 Ubuntu had no drop-in config dir, so we create one if needed
@@ -123,6 +124,9 @@ setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 
 	# Allow SSH tunneling
 	#GatewayPorts yes
+
+	# Disable Debian/Ubuntu version string (visible with ssh -v)
+	#DebianBanner no
 EOF
 
 # Change listening port
