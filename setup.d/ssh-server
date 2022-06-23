@@ -38,7 +38,7 @@ install_package openssh-server ssh-import-id
 
 if ! [[ -r "$keyfile" ]]; then
 	message 'Create SSH key (ED25519)'
-	ssh-keygen -a 100 -t ed25519 -f "$keyfile"
+	setup_run ssh-keygen -a 100 -t ed25519 -f "$keyfile"
 fi
 
 message 'Add authorized SSH keys'
@@ -47,15 +47,16 @@ add_ssh_key() {
 	local path=${2:-}
 	# Check if key is not a duplicate and is valid
 	if ! grep -Fxq -- "$key" "$path" 2>/dev/null &&
-		ssh-keygen -l -f <(echo "$key") &>/dev/null
+		setup_run ssh-keygen -l -f <(echo "$key") &>/dev/null
 	then
-		echo "$key" >> "$path"
+		setup_run tee -a -- "$path" <<< "$key"
 	fi
 }
 
 # Create user SSH paths, if needed
-if ! [[ -d "$sshdir"   ]]; then mkdir --parents --mode 0700 -- "$sshdir"; fi
-if ! [[ -r "$userkeys" ]]; then touch -- "$userkeys"; chmod 0600 -- "$userkeys"; fi
+# shellcheck disable=SC2174
+if ! [[ -d "$sshdir"   ]]; then setup_run mkdir --parents --mode 0700 -- "$sshdir"; fi
+if ! [[ -r "$userkeys" ]]; then setup_run touch -- "$userkeys"; chmod 0600 -- "$userkeys"; fi
 
 # Add user-supplied keys
 for key in "${auth_pubkeys[@]}"; do
@@ -95,7 +96,7 @@ if ! [[ -d "$configdir" ]]; then
 		EOF
 	fi
 fi
-sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
+setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	# Created by ${SETUP_NAME}
 	# ${SETUP_WEBSITE}
 
@@ -127,7 +128,7 @@ EOF
 # Change listening port
 if [[ "$port" != "$default_ssh_port" ]]; then
 	message "Change listening port to ${port}"
-	sudo tee "$configdir"/50-"$SETUP_SLUG"-custom_port.conf <<-EOF
+	setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-custom_port.conf <<-EOF
 		# Created by ${SETUP_NAME}
 		# ${SETUP_WEBSITE}
 		# Change listening port. Default is ${default_ssh_port}
@@ -143,8 +144,7 @@ conf=/etc/security/access.conf
 setting='-:root:ALL EXCEPT LOCAL'
 if [[ -r "$conf" ]] && ! grep -Fxq -- "$setting" "$conf"; then
 	backup_file "$conf"
-	sudo tee -a "$conf" <<-EOF
-
+	setup_run sudo tee -a "$conf" <<-EOF
 
 	# Added by ${SETUP_NAME}
 	# ${SETUP_WEBSITE}
@@ -157,7 +157,7 @@ fi
 try sudo mv -- "$rootkeys" "$(bakfile "$rootkeys")"
 
 
-message 'Enable Firewall rule for SSH'
+message 'Enable Firewall rules'
 if [[ "$port" == "$default_ssh_port" ]]; then
 	setup_run sudo ufw allow OpenSSH
 else
@@ -169,7 +169,7 @@ else
 		description=OpenSSH service on port ${port}
 		ports=${port}/tcp
 	EOF
-	sudo ufw allow SSH
+	setup_run sudo ufw allow SSH
 fi
 try sudo ufw reload >/dev/null
 sudo systemctl reload ssh
