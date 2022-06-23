@@ -79,6 +79,8 @@ message 'Setup SSH'
 # - Disable X11 Forwarding
 # - Allow SSH tunneling (disabled)
 # - Disable Debian banner (disabled)
+# For more hardnening suggestions:
+# https://www.digitalocean.com/community/tutorials/how-to-harden-openssh-on-ubuntu-18-04
 configdir=/etc/ssh/sshd_config.d
 
 # Until 20.04 Ubuntu had no drop-in config dir, so we create one if needed
