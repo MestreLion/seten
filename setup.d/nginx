@@ -22,6 +22,7 @@ fi
 key=/etc/apt/keyrings/nginx-archive-keyring.gpg
 url=https://nginx.org/en/linux_packages.html#Ubuntu
 repo=http://nginx.org/packages/ubuntu
+line="[arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] ${repo} ${SETUP_CODENAME} nginx"
 
 # -----------------------------------------------------------------------------
 
@@ -38,9 +39,14 @@ gpg --dry-run --quiet --import --import-options import-show "$key"
 
 message "Add Nginx.org APT repository and pin it"
 setup_run sudo tee /etc/apt/sources.list.d/nginx-mainline.list <<-EOF
-	deb [arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] $repo ${SETUP_CODENAME} nginx
+	$(signature)
+
+	deb     ${line}
+	deb-src ${line}
 EOF
-setup_run sudo tee /etc/apt/preferences.d/nginx-apt-repo-pin <<-EOF
+setup_run sudo tee /etc/apt/preferences.d/nginx.pref <<-EOF
+	$(signature)
+
 	Package: *
 	Pin: origin nginx.org
 	Pin: release o=nginx
