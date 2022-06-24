@@ -13,9 +13,13 @@ if [[ -r "$setuplib" ]]; then source "$setuplib"; else
 fi
 # -----------------------------------------------------------------------------
 
-# https://nginx.org/en/linux_packages.html#Ubuntu
+# Adapted from https://nginx.org/en/linux_packages.html#Ubuntu
 
-key=/usr/share/keyrings/nginx-archive-keyring.gpg
+# /etc/apt/keyrings/ is recommended over /usr/share/keyrings/ for local install
+# of keys that are not managed by the packages themselves.
+# See https://wiki.debian.org/DebianRepository/UseThirdParty
+# and `man 5 sources.list` in Ubuntu 22.04+
+key=/etc/apt/keyrings/nginx-archive-keyring.gpg
 url=https://nginx.org/en/linux_packages.html#Ubuntu
 repo=http://nginx.org/packages/ubuntu
 
@@ -26,6 +30,7 @@ message "Install dependencies"
 install_package curl gnupg ca-certificates lsb-release ubuntu-keyring
 
 message "Add Nginx.org signing key, confirm fingerprint matches $url"
+setup_run sudo mkdir -p -- "${key%/*}"
 curl -Ss https://nginx.org/keys/nginx_signing.key | gpg --dearmor |
 	setup_run sudo tee -- "$key" >/dev/null
 # Just for visual confirmation:
