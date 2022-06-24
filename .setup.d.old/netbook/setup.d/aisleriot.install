@@ -1,1 +1,5 @@
-../../setup/aisleriot.install
+#!/bin/bash
+
+# Removed in commit 5b086863665dd36a05b7f86272667e3747111553,
+# settings are now in ~/.config/aisleriot
+# See git log -p 5b086863665dd36a05b7f86272667e3747111553
