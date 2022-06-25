@@ -46,7 +46,7 @@ done
 sudo apt update
 sudo apt install -y -- "${packages[@]}"
 
-
+# See setup.d/minidlna for an improved version of this
 sudo tee /etc/sysctl.d/90-rodrigo-inotify_max_user_watches.conf >/dev/null <<-EOF
 # Increase inotify max watch limit, for PyCharm and perhaps other applications.
 # In Debian/Ubuntu, create this file as '/etc/sysctl.d/60-*.conf' and run

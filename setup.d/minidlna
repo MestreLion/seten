@@ -13,15 +13,49 @@ if [[ -r "$setuplib" ]]; then source "$setuplib"; else
 fi
 # -----------------------------------------------------------------------------
 
+clamp() {
+	local value=$1
+	local min=$2
+	local max=$3
+	awk -v a="$min" -v b="$max" '$0<a {$0=a} $0>b {$0=b} 1' <<< "$value"
+}
+
+# -----------------------------------------------------------------------------
+
 install_package minidlna
 
 # Fix "WARNING: Inotify max_user_watches [8192] is low ..."
-# https://forum.excito.com/viewtopic.php?t=3592
-# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=613219
+current=$(</proc/sys/fs/inotify/max_user_watches)
+kernel=8192    # Approximate watches per GiB RAM in kernel >= 5.11, fixed before
+limit=1048576  # 1 Mi watches
+expected=$(awk -v k=$kernel '/MemTotal/{printf("%d", k * $2 / 1048576)}' /proc/meminfo)
+if ((current < 2 * expected)); then
+	watches=$(clamp $((4 * expected)) "$kernel" "$limit")
+	config=/etc/sysctl.d/90-increase-inotify_max_user_watches.conf
+	message "Increase inotify maximum user watches to ${watches}"
+	sudo tee -- "$config" <<-EOF
+		$(signature)
 
-# echo 65536 > /proc/sys/fs/inotify/max_user_watches  # single session
-# sysctl fs.inotify.max_user_watches=66536  # ?
-# /etc/sysctl	fs.inotify.max_user_watches = 66536  # Permanent
+		# Increase inotify watch limit for MiniDLNA and possibly others.
+		#
+		# Original setting:
+		#     ${current}
+		# Reference values:
+		#    Kernel <= 5.10 (Ubuntu 18.04, 20.04.2): fixed at 8192 (8Ki)
+		#    Kernel >= 5.11 (Ubuntu 20.04.3, 22.04): ~64Ki for 8GiB RAM (use up to ~1% RAM)
+		#    See https://github.com/torvalds/linux/commit/92890123749bafc317bbfacbe0a62
+		#    Some sources say each _used_ watch takes ~1080B of RAM in a 64-bit system
+		# Current watch actual usage:
+		#     sudo lsof | grep inotify | wc -l
+		# Relevant manpages:
+		#     man inotify
+		#     man sysctl.conf
+		#
+		# Increasing maximum to approximately 4 times the (modern) kernel default
+		fs.inotify.max_user_watches = ${watches}
+	EOF
+	sudo sysctl --load "$config"
+fi
 
 
 # TODO: Patch config file!
