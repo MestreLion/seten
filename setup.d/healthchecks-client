@@ -26,7 +26,7 @@ target=/usr/local/bin/sch
 # -----------------------------------------------------------------------------
 
 message "Install dependencies"
-install_package git python3-pip
+install_package git python3-{pip,venv}
 
 message "Install environment at $path"
 setup_run sudo -H python3 -m venv -- "$path"
