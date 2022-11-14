@@ -83,14 +83,16 @@ fi
 
 
 # Prevenir timeout SSH do cliente
+# TODO: Must also comment-out SendEnv
+# https://stackoverflow.com/q/29609371/624066
 conf=/etc/ssh/ssh_config
 if ! grep -iq "$SETUP_USER" -- "$conf"; then
 	message "Alterando $conf para prevenir timeout de servidores"
 	$SETUP_RUN sudo cp -- "$conf"{,."$SETUP_USER".bak}
 	$SETUP_RUN sudo tee -a -- "$conf" <<-EOF
 
-	#   Adicionado por ${SETUP_USER^} ${0##*/}
-	    ServerAliveInterval 100
+		$(signature added)
+		ServerAliveInterval 100
 	EOF
 fi
 
