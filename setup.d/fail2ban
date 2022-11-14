@@ -34,9 +34,9 @@ else
 		description=OpenSSH service on port ${port}
 		ports=${port}/tcp
 	EOF
-	setup_run ufw allow SSH
+	setup_run sudo ufw allow SSH
 fi
-setup_run try sudo ufw reload >/dev/null
+try sudo ufw reload
 setup_run sudo ufw enable
 
 message 'Install Fail2Ban'
