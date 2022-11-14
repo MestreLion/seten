@@ -36,7 +36,7 @@ message "Install client $source"
 setup_run sudo -H "$path"/bin/pip install --upgrade "$source"
 
 message "Install executable $target"
-setup_run rm -f "$target" && setup_run sudo ln -s -- "$bin" "$target"
+setup_run sudo ln -fs -- "$bin" "$target"
 
 message "Create system group $group and add yourself to it"
 setup_run sudo addgroup --system --quiet -- "$group"
