@@ -13,13 +13,16 @@ if [[ -r "$setuplib" ]]; then source "$setuplib"; else
 fi
 # -----------------------------------------------------------------------------
 
+media_dir=${1:-${SETUP_MINIDLNA_MEDIA_DIR:-}}
+friendly_name=${2:-${SETUP_MINIDLNA_FRIENDLY_NAME:-}}
+
+# -----------------------------------------------------------------------------
 clamp() {
 	local value=$1
 	local min=$2
 	local max=$3
 	awk -v a="$min" -v b="$max" '$0<a {$0=a} $0>b {$0=b} 1' <<< "$value"
 }
-
 # -----------------------------------------------------------------------------
 
 install_package minidlna
@@ -81,3 +84,11 @@ setup_run sudo ufw allow app 'MiniDLNA Server'
 try sudo ufw reload
 
 # TODO: Patch config file!
+if [[ "$media_dir" ]]; then
+	:  #media_dir=${media_dir}
+fi
+# Name that the DLNA server presents to clients.
+# Defaults to "hostname: username".
+if [[ "$friendly_name" ]]; then
+	:  #friendly_name=${friendly_name}
+fi
