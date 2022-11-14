@@ -37,7 +37,8 @@ message 'Install OpenSSH Server'
 install_package openssh-server ssh-import-id
 
 if ! [[ -r "$keyfile" ]]; then
-	message 'Create SSH key (ED25519)'
+	message 'Create SSH ED25519 key, choose a strong password!'
+	# by default adds comment "$USER@$HOSTNAME"
 	setup_run ssh-keygen -a 100 -t ed25519 -f "$keyfile"
 fi
 
@@ -79,6 +80,7 @@ message 'Setup SSH'
 # - Disable X11 Forwarding
 # - Allow SSH tunneling (disabled)
 # - Disable Debian banner (disabled)
+# - Disable sending
 # For more hardnening suggestions:
 # https://www.digitalocean.com/community/tutorials/how-to-harden-openssh-on-ubuntu-18-04
 configdir=/etc/ssh/sshd_config.d
@@ -127,6 +129,7 @@ setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 
 	# Disable Debian/Ubuntu version string (visible with ssh -v)
 	#DebianBanner no
+
 EOF
 
 # Change listening port
@@ -172,5 +175,5 @@ else
 	EOF
 	setup_run sudo ufw allow SSH
 fi
-try sudo ufw reload >/dev/null
+try sudo ufw reload
 sudo systemctl reload ssh
