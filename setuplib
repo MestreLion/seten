@@ -396,6 +396,26 @@ package_install() {
 	echo >&2 "package_install() is deprecated, use install_package() instead"
 }
 
+add_ppa() {
+	# WIP!
+	# See nginx, and https://blog.zackad.dev/en/2017/08/17/add-ppa-simple-way.html
+	ppa=$1  # user/slug
+	key_url=$2  # gotta parse launchpad!
+	key=/etc/apt/keyrings/${ppa//\//-}.gpg
+	repo=https://ppa.launchpadcontent.net/${ppa}/ubuntu
+	line="[arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] ${repo} ${SETUP_CODENAME} main"
+	message "Add PPA $ppa"
+	setup_run sudo tee /etc/apt/sources.list.d/nginx-mainline.list <<-EOF
+		$(signature)
+
+		deb     ${line}
+		deb-src ${line}
+	EOF
+	message "Add PPA signing key"
+	curl -Ss "$key_url" | gpg --dearmor | setup_run sudo tee -- "$key" >/dev/null
+}
+
+
 package_remove() {
 	# Remove all existing packages in a single command
 	# Usage: package_remove [PACKAGE...]
