@@ -59,5 +59,25 @@ if ((current < 2 * expected)); then
 	sudo sysctl --load "$config"
 fi
 
+message "Enable Firewall rules"
+multicast=239.255.255.250
+setup_run sudo tee /etc/ufw/applications.d/minidlna.conf <<-EOF
+	$(signature)
+
+	# May be restricted to destination ${multicast}, minidlnad only binds to that IP for SSDP
+	# sudo ufw allow to "$multicast" app 'MiniDLNA SSDP'
+	[MiniDLNA SSDP]
+	title=DLNA Media Server (MiniDLNA UPnP/SSDP Discovery)
+	description=MiniDLNA (aka ReadyDLNA) aims to be fully compliant with DLNA/UPnP-AV clients
+	ports=1900/udp
+
+	[MiniDLNA Server]
+	title=DLNA Media Server (MiniDLNA UPnP-AV/HTTP Server)
+	description=MiniDLNA (aka ReadyDLNA) aims to be fully compliant with DLNA/UPnP-AV clients
+	ports=8200/tcp
+EOF
+setup_run sudo ufw allow to "$multicast" app 'MiniDLNA SSDP'
+setup_run sudo ufw allow app 'MiniDLNA Server'
+try sudo ufw reload
 
 # TODO: Patch config file!
