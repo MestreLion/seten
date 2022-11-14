@@ -20,7 +20,8 @@ message "Remember last boot selection"
 conf=${confdir}/remember-last-boot.cfg
 if ! [[ -e "$conf" ]]; then
 	setup_run sudo tee "$conf" <<-EOF
-		# Added by ${SETUP_NAME}
+		$(signature)
+
 		# Remember last boot selection
 		GRUB_DEFAULT=saved
 		GRUB_SAVEDEFAULT=true
@@ -31,7 +32,8 @@ message "Decrease timeout to 3 seconds"
 conf=${confdir}/set-timeout.cfg
 if ! [[ -e "$conf" ]]; then
 	setup_run sudo tee "$conf" <<-EOF
-		# Added by ${SETUP_NAME}
+		$(signature)
+
 		# Set timeout to 3 seconds
 		GRUB_TIMEOUT=3
 	EOF
