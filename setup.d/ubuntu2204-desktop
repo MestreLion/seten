@@ -40,6 +40,7 @@ packages=(
 	solaar                  # Logitech Unifying Keyboard/Mouse receiver
 	ssh-server
 	trash-cli
+	xdot                    # Dot files viewer (Python's cProfile results)
 
 #	upnp-router-control     # Not in 20.04, may be back in 22.04
 #	jstest-gtk              # Consider flatpak: https://jstest-gtk.gitlab.io/
