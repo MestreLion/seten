@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Firewall rules for UPnP/SSDP clients'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+# WIP!!!
+
+message "Enable Firewall rules for UPnP/SSDP clients"
+multicast=239.255.255.250
+port=1900
+setup_run sudo tee /etc/ufw/applications.d/minidlna.conf <<-EOF
+	$(signature)
+
+	[UPnP]
+	title=DLNA Media Server (MiniDLNA UPnP/SSDP Discovery)
+	description=MiniDLNA (aka ReadyDLNA) aims to be fully compliant with DLNA/UPnP-AV clients
+	# May be restricted to destination ${multicast}, minidlnad only binds to that IP for SSDP
+	ports=${port}/udp
+
+	[MiniDLNA Server]
+	title=DLNA Media Server (MiniDLNA UPnP-AV/HTTP Server)
+	description=MiniDLNA (aka ReadyDLNA) aims to be fully compliant with DLNA/UPnP-AV clients
+	ports=8200/tcp
+
+	#To                         Action      From
+	#--                         ------      ----
+	#Anywhere                   ALLOW       10.10.10.203 8200
+	#Anywhere                   ALLOW       10.10.10.1 8443
+	#239.255.255.250            ALLOW       Anywhere
+	#224.0.0.0/24               ALLOW       Anywhere
+	#8200                       ALLOW       10.10.10.203
+	#Minecraft on eth0          ALLOW       1.1.1.1
+EOF
+setup_run sudo ufw allow to "$multicast" app 'MiniDLNA SSDP'
+try sudo ufw reload
+
+# https://unix.stackexchange.com/a/444804/4919
+
+#
+#$ iptables -A INPUT -d 239.255.255.250/32 -p udp -m udp --dport 1900 -j ACCEPT
+#$ ip6tables -A INPUT -d ff02::c/128 -p udp -m udp --dport 1900 -j ACCEPT
+#$ ip6tables -A INPUT -d ff05::c/128 -p udp -m udp --dport 1900 -j ACCEPT
+
+
+setup_run sudo ipset create upnp hash:ip,port timeout 5
+setup_run sudo iptables -A OUTPUT -d "$multicast"/32 -p udp -m udp --dport "$port" -j SET --add-set upnp src,src --exist
+setup_run sudo iptables -A INPUT -p udp -m set --match-set upnp dst,dst -j ACCEPT
+
+#$ ipset create upnp6 hash:ip,port timeout 3 family inet6
+#$ ip6tables -A OUTPUT -d ff02::c/128 -p udp -m udp --dport 1900 -j SET --add-set upnp6 src,src --exist
+#$ ip6tables -A OUTPUT -d ff05::c/128 -p udp -m udp --dport 1900 -j SET --add-set upnp6 src,src --exist
+#$ ip6tables -A INPUT -p udp -m set --match-set upnp6 dst,dst -j ACCEPT

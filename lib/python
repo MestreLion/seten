@@ -1,0 +1,21 @@
+# DRAFT!
+
+commands-with-prefix() { local prefix=$1; compgen -c "$prefix" | sort -uV; }
+command-latest() { compgen -c "$1" | sort -urV | head -n1; }
+
+pip-install() {
+	local packages=( "$@" )
+	local pip; pip=$(command-latest pip)
+	local python; python=$(command-latest python)
+
+	if exists "${packages[@]}"; then return; fi
+	if exists pipx; then
+		pipx install -- "${packages[@]}"
+		return
+	fi
+	if [[ -z "$pip" ]]; then
+		sudo apt install python3-pip
+		"$python" -m pip install --user pip
+	fi
+	pip3 install --upgrade -- "${packages[@]}"
+}

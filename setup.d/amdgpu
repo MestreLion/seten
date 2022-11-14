@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='AMD Radeon'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+# WIP!!!
+
+# https://gitlab.com/corectrl/corectrl
+
+message "Add Corectl.org APT repository and pin it"
+setup_run sudo tee /etc/apt/sources.list.d/corectrl.list <<-EOF
+	$(signature)
+
+	deb     ${line}
+	deb-src ${line}
+EOF
+setup_run sudo tee /etc/apt/preferences.d/corectrl.pref <<-EOF
+	$(signature)
+
+	# Never prefer packages from the ernstp repository
+	Package: *
+	Pin: release o=LP-PPA-ernstp-mesarc
+	Pin-Priority: 1
+
+	# Allow upgrading only corectrl from LP-PPA-ernstp-mesarc
+	Package: corectrl
+	Pin: release o=LP-PPA-ernstp-mesarc
+	Pin-Priority: 500
+EOF
+
+# One-shot install trust
+# sudo HOME=~caddy caddy trust
+
+# TODO: Add /etc/caddy/Caddyfile
