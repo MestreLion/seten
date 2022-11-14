@@ -33,7 +33,7 @@ if ((current < 2 * expected)); then
 	watches=$(clamp $((4 * expected)) "$kernel" "$limit")
 	config=/etc/sysctl.d/90-increase-inotify_max_user_watches.conf
 	message "Increase inotify maximum user watches to ${watches}"
-	sudo tee -- "$config" <<-EOF
+	setup_run sudo tee -- "$config" <<-EOF
 		$(signature)
 
 		# Increase inotify watch limit for MiniDLNA and possibly others.
@@ -51,9 +51,11 @@ if ((current < 2 * expected)); then
 		#     man inotify
 		#     man sysctl.conf
 		#
-		# Increasing maximum to approximately 4 times the (modern) kernel default
+		# Increasing maximum up to approximately 4 times the (modern) kernel default,
+		# with a minimum of ${kernel} and a limit of ${limit}
 		fs.inotify.max_user_watches = ${watches}
 	EOF
+	echo
 	sudo sysctl --load "$config"
 fi
 
