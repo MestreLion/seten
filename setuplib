@@ -248,6 +248,7 @@ create_temp_dir() {
 	trap 'rm -rvf -- "${_TEMP_DIRS[@]}"' EXIT
 }
 
+# shellcheck disable=SC2120
 signature() {
 	local action=${1:-created}
 	local comment=${2:-#}
@@ -398,12 +399,14 @@ package_install() {
 
 add_ppa() {
 	# WIP!
-	# See nginx, and https://blog.zackad.dev/en/2017/08/17/add-ppa-simple-way.html
-	ppa=$1  # user/slug
-	key_url=$2  # gotta parse launchpad!
-	key=/etc/apt/keyrings/${ppa//\//-}.gpg
-	repo=https://ppa.launchpadcontent.net/${ppa}/ubuntu
-	line="[arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] ${repo} ${SETUP_CODENAME} main"
+	# See nginx, https://blog.zackad.dev/en/2017/08/17/add-ppa-simple-way.html
+	# move to lib/ppa.py
+	local ppa=${1#ppa:}  # user/slug, or ppa:user/slug
+	local user=
+	local key_url=$2  # gotta parse launchpad!
+	local key=/etc/apt/keyrings/${ppa//\//-}.gpg
+	local repo=https://ppa.launchpadcontent.net/${ppa}/ubuntu
+	local line; line="[arch=${SETUP_APT_ARCH} signed-by=$(escape "$key")] ${repo} ${SETUP_CODENAME} main"
 	message "Add PPA $ppa"
 	setup_run sudo tee /etc/apt/sources.list.d/nginx-mainline.list <<-EOF
 		$(signature)
