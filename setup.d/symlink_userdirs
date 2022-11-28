@@ -46,7 +46,7 @@ merge_dirs() {
 	setup_run mkdir -p -- "$target"
 	if ! [[ "$(df --output=fstype "$target" | tail -n -1)" == ext4 ]]; then
 		# Disable permission setting for non-EXT4 partitions (FAT/NTFS/etc)
-		rsync_opts+=(--no-p --no-g)
+		rsync_opts+=(--no-p --no-g --omit-dir-times)
 	fi
 	setup_run rsync -qaSh "${rsync_opts[@]}" --progress --remove-source-files -- \
 		"${source%/}/" "${target%/}/"
