@@ -27,33 +27,20 @@ declare -A winehq=(
 # wget -qO- "${winehq[key]}" | sudo apt-key add -
 # sudo apt-add-repository --no-update "${winehq[url]}"
 
+# Official, manual way, leading to similar results. Differences:
+# - apt-manage key saves as "gpg" instead of "key" (but uses same winehq-archive slug)
+# - apt-manage add adds Architecture and X-Repolib-* fields and comments
+# - apt-manage is not using codename for slug, to keep a common key
+# sudo mkdir -pm755 /etc/apt/keyrings
+# sudo wget -O /etc/apt/keyrings/winehq-archive.key "${winehq[key]}"
+# sudo wget -NP /etc/apt/sources.list.d/ "${winehq[url]}"/dists/${SETUP_CODENAME}/winehq-${SETUP_CODENAME}.sources
 
 # TODO: Later versions of apt-manage might have indempotent `add`
 sudo apt-manage remove --assume-yes "${winehq[slug]}" >/dev/null 2>&1 || true
 sudo apt-manage add --terse --source-code --identifier "${winehq[slug]}" --name "${winehq[name]}" "${winehq[url]}"
 sudo apt-manage key --url "${winehq[key]}" -- "${winehq[slug]}"
 
-if [[ "${SETUP_CODENAME}" == "bionic" ]]; then
-	declare -A obs=(
-		[name]="Wine (OBS Ubuntu 18.04)"
-		[slug]="wine-obs-ubuntu_1804"
-		[url]="https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/"
-		[key]="https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key"
-		[suite]="./"
-	)
-	# Deprecated way using apt-key / apt-add-repository:
-	# wget -qO- "${obs[key]}" | sudo apt-key add -
-	# sudo apt-add-repository --no-update "deb ${obs[url]} ${obs[suite]}"
-
-	# TODO: Later versions might have indempotent `add`
-	sudo apt-manage remove --assume-yes "${obs[slug]}" >/dev/null 2>&1 || true
-	# TODO: Later versions might support specifying a "./" suite and empty components in `add`
-	sudo apt-manage add --terse --source-code --identifier "${obs[slug]}" --name "${obs[name]}" "${obs[url]}"
-	sudo apt-manage modify --add-suite "${obs[suite]}" --remove-suite "${SETUP_CODENAME}" -- "${obs[slug]}"
-	sudo sed -i '/^Components:/d' -- /etc/apt/sources.list.d/"${obs[slug]}".sources
-	sudo apt-manage key --url "${obs[key]}" -- "${obs[slug]}"
-fi
-
+# TODO: use SETUP_RUN ?
 sudo dpkg --add-architecture i386
 sudo apt update
 sudo apt install --install-recommends winehq-stable
