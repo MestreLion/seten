@@ -27,7 +27,8 @@ packages=(
 	deluge                  # Torrent GUI client
 	{d,dpkg-,info2}www      # Docs on browser! Pulls apache2
 	exfat-utils             # full exFAT filesystem support (PS4, SD Cards)
-	git{,g,-restore-mtime}  # Bumping popcorn ;-)
+	git{,g,-doc}            # Git and tools
+	git-restore-mtime       # Bumping popcorn ;-)
 	gnome-cards-data        # For aisleriot
 	gnome-subtitles         # Pulls libmono :-(
 	gparted
