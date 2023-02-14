@@ -5,6 +5,9 @@
 # https://www.netdata.cloud/agent
 # https://learn.netdata.cloud/docs/agent/packaging/installer/methods/kickstart
 
+# WARNING: Netdata changed repos to http://repo.netdata.cloud/, no HTTPS!
+# THIS SCRIPT IS MOST LIKELY OUTDATED!
+
 # -----------------------------------------------------------------------------
 
 DESCRIPTION='Netdata'
