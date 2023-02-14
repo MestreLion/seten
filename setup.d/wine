@@ -1,17 +1,59 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Copyright (C) 2023 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Wine from Wine HQ repository'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
 
 # https://wiki.winehq.org/Ubuntu
 
+declare -A winehq=(
+	[name]="Wine HQ"
+	[slug]="winehq" #-${SETUP_CODENAME}"
+	[url]="https://dl.winehq.org/wine-builds/ubuntu/"
+	[key]="https://dl.winehq.org/wine-builds/winehq.key"
+)
+
+# Deprecated way using apt-key / apt-add-repository:
+# wget -qO- "${winehq[key]}" | sudo apt-key add -
+# sudo apt-add-repository --no-update "${winehq[url]}"
+
+
+# TODO: Later versions of apt-manage might have indempotent `add`
+sudo apt-manage remove --assume-yes "${winehq[slug]}" >/dev/null 2>&1 || true
+sudo apt-manage add --terse --source-code --identifier "${winehq[slug]}" --name "${winehq[name]}" "${winehq[url]}"
+sudo apt-manage key --url "${winehq[key]}" -- "${winehq[slug]}"
+
+if [[ "${SETUP_CODENAME}" == "bionic" ]]; then
+	declare -A obs=(
+		[name]="Wine (OBS Ubuntu 18.04)"
+		[slug]="wine-obs-ubuntu_1804"
+		[url]="https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/"
+		[key]="https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key"
+		[suite]="./"
+	)
+	# Deprecated way using apt-key / apt-add-repository:
+	# wget -qO- "${obs[key]}" | sudo apt-key add -
+	# sudo apt-add-repository --no-update "deb ${obs[url]} ${obs[suite]}"
+
+	# TODO: Later versions might have indempotent `add`
+	sudo apt-manage remove --assume-yes "${obs[slug]}" >/dev/null 2>&1 || true
+	# TODO: Later versions might support specifying a "./" suite and empty components in `add`
+	sudo apt-manage add --terse --source-code --identifier "${obs[slug]}" --name "${obs[name]}" "${obs[url]}"
+	sudo apt-manage modify --add-suite "${obs[suite]}" --remove-suite "${SETUP_CODENAME}" -- "${obs[slug]}"
+	sudo sed -i '/^Components:/d' -- /etc/apt/sources.list.d/"${obs[slug]}".sources
+	sudo apt-manage key --url "${obs[key]}" -- "${obs[slug]}"
+fi
 
 sudo dpkg --add-architecture i386
-
-# if ubuntu 18: ###
-wget -qO- 'https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key' | sudo apt-key add -
-sudo apt-add-repository --no-update 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
-####
-
-wget -qO- 'https://dl.winehq.org/wine-builds/winehq.key' | sudo apt-key add -
-sudo apt-add-repository --no-update 'https://dl.winehq.org/wine-builds/ubuntu/'
 sudo apt update
-
 sudo apt install --install-recommends winehq-stable
