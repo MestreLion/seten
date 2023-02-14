@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# WIP!
+
+# https://podman.io/getting-started/installation
+
+slug=kubic_libcontainers
+repo=https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_$(lsb_release -rs)
+keyurl="$repo"/Release.key
+
+
+repofile=/etc/apt/sources.list.d/$slug.list
+keydir=/etc/apt/keyrings
+keyfile=$keydir/$slug.gpg
+
+
+sudo mkdir -p "$keydir"
+curl -fsSL "$keyurl" | gpg --dearmor | sudo tee "$keyfile" > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=${keyfile}] ${repo%\/}/ /" |
+sudo tee "$repofile" > /dev/null
+
+#sudo apt-get update -qq
+#sudo apt-get -qq -y install podman
