@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+# WIP, NOT WORKING AS INTENDED!
+
+DESCRIPTION='GRUB2 Theming'
+ARGS='WALLPAPER'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+wallpaper=${1:-${SETUP_GRUB2_WALLPAPER:-""}}; argument "$wallpaper" WALLPAPER
+
+config=/etc/grub.d/06_${SETUP_SLUG}_custom_theme
+splash=/boot/grub/"$(basename -- "$wallpaper")"  # ${SETUP_SLUG}_custom_splash.png
+
+# -----------------------------------------------------------------------------
+
+
+# https://shallowsky.com/blog/linux/grub-splashimage.html
+# - PNG works, JPG doesn't, even though I found several websites with JPG examples
+# - Use 640x480 at least initially. I think it's supposed to be possible to use other resolutions, but I haven't explored that yet.
+# - You can put the image in /boot/grub/imagename.png and refer to it from grub.cfg by that same path. The imagename doesn't have to be splash.png, but it does need to be a png, not a jpg.
+# - You need to insmod png first (for jpg images, the module in /usr/lib/grub/x86_64-efi is called jpeg.mod, not jpg.mod, but insmod jpeg still didn't work for me)
+# - Don't use a background color (e.g. don't set menu_color_normal=cyan/blue) because that will block out nearly all of your image, not just the part where the text is.
+#   If you want to set a foreground color, use black as the background color, because in the grub2 world, black doesn't mean black, it means transparent.
+
+setup_run sudo cp -- "$wallpaper" "$splash"
+setup_run sudo tee "$config" <<-EOF
+	$(signature)
+	# Also see https://shallowsky.com/blog/linux/grub-splashimage.html
+	# insmod png
+	if background_image $(escape "$splash"); then
+	    # colors to go on top of the image.
+	    # Setting the second color to black actually means make it transparent.
+	    set menu_color_normal=white/black
+	    set menu_color_highlight=yellow/black
+	else
+	    # colors used if the boot splash image doesn't work
+	    set menu_color_normal=white/blue
+	    set menu_color_highlight=yellow/blue
+	fi
+EOF
+setup_run sudo chmod +x -- "$config"
+setup_run sudo update-grub
