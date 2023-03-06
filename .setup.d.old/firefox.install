@@ -4,6 +4,21 @@
 
 # TODO: Skel, UI, Sync
 
+# Backspace
+# -----------
+# https://www.mozilla.org/en-US/firefox/87.0/releasenotes/
+# March 23, 2021
+
+# To prevent user data loss when filling out forms, we’ve disabled the Backspace key as a navigation shortcut for the back navigation button. To re-enable the Backspace keyboard shortcut, you can change the about:config preference browser.backspace_action to 0. You can also use the recommended Alt + Left arrow (Command + Left arrow on Mac) shortcut instead.
+
+# about:config
+# browser.backspace_action
+
+# http://kb.mozillazine.org/Browser.backspace_action
+# 0 = Go "Back" in history
+# 1 = Page Up
+# 2 = ignore the keypress (default)
+
 # -----------------------------------------------------------------------------
 
 setuplib=${1:-${SETUP_LIB:-$(dirname "$(readlink -f "$0")")/../setuplib}}
