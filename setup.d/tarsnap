@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Tarsnap Debian repository'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+slug=tarsnap
+key_url=https://pkg.tarsnap.com/tarsnap-deb-packaging-key.asc
+key=/etc/apt/keyrings/${slug}-archive-keyring.gpg
+repo=https://pkg.tarsnap.com/deb/${SETUP_CODENAME}
+line="[signed-by=$(escape "$key")] ${repo} ./"
+
+# -----------------------------------------------------------------------------
+# https://www.tarsnap.com/pkg-deb.html
+
+message "Install dependencies"
+# Most installed by default. Changed to gnupg instead of transitional gnupg2
+install_package curl gnupg ca-certificates lsb-release ubuntu-keyring
+
+message "Add ${slug^} signing key '$key_url'"
+setup_run sudo mkdir -p -- "${key%/*}"
+curl -Ss "$key_url" | gpg --dearmor | setup_run sudo tee -- "$key" >/dev/null
+
+message "Add ${slug^} APT repository '$repo'"
+setup_run sudo tee /etc/apt/sources.list.d/${slug}.list <<-EOF
+	$(signature)
+
+	deb     ${line}
+	deb-src ${line}
+EOF
+
+# TODO: Apt-pinning!
+
+message "Install ${slug^}"
+setup_run sudo apt update
+install_package "$slug"
