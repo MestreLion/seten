@@ -34,8 +34,8 @@ message "Add ${slug^} APT repository '$repo'"
 setup_run sudo tee /etc/apt/sources.list.d/${slug}.list <<-EOF
 	$(signature)
 
-	deb     ${line}
-	deb-src ${line}
+	deb      ${line}
+	#deb-src ${line}
 EOF
 
 # TODO: Apt-pinning!
