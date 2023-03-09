@@ -34,6 +34,7 @@ packages=(
 	gparted
 	jq                      # JSON shell manipulation
 	nautilus-admin          # Open Nautilus / Edit in Gedit as root with admin://
+	p7zip-full              # 7z archiver
 	pv                      # Nice shell/pipe progress bar, used by dd-status
 	python3-pip             # enable python3 -m pip
 	rdiff-backup            # backup-home
