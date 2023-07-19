@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Memtest86+ on UEFI systems'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+# Memtest86+ supports UEFI systems since v6 (2022-10), available in Ubuntu 23.04
+# and backported to 22.04
+
+# TODO: Disable / Warn about Secure Boot, or sign the executable
+# To prevent "error: bad shim signature" when trying to run from grub
+# https://superuser.com/questions/1778230/
+
+if ! [[ "$SETUP_DISTRO" == ubuntu ]]; then
+	fatal "This only supports Ubuntu"
+fi
+
+if version_greater "$SETUP_RELEASE" 23.04; then
+	message "Memtest86+ already supports UEFI"
+	exit
+fi
+
+if ! version_greater "$SETUP_RELEASE" 22.04; then
+	# TODO: add jammy-backports, pin memtest86+ and disable others
+	fatal "Memtest86+ V6 is only available on Ubuntu 22.04 or newer"
+fi
+
+# Ubuntu 22.04
+
+# TODO: Enable backports
+sudo apt upgrade memtest86+/jammy-backports

@@ -39,5 +39,17 @@ if ! [[ -e "$conf" ]]; then
 	EOF
 fi
 
+# https://bugs.launchpad.net/ubuntu/+source/memtest86+/+bug/567955
+message "Disable Memtest86+ serial console entry"
+conf=${confdir}/disable-memtest-serial.cfg
+if ! [[ -e "$conf" ]]; then
+	setup_run sudo tee "$conf" <<-EOF
+		$(signature)
+
+		# Set timeout to 3 seconds
+		GRUB_MEMTEST_DISABLE_SERIAL=true
+	EOF
+fi
+
 message "Update Grub"
 setup_run sudo update-grub
