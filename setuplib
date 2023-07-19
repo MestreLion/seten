@@ -200,9 +200,10 @@ message() { if ((SETUP_VERBOSE)); then green    "* $*";     fi; }
 debugmsg(){ if ((SETUP_DEBUG));   then echo       "$@" >&2; fi; }
 debugvar(){ if ((SETUP_DEBUG));   then declare -p "$@" >&2; fi; }
 
-user_home()   { getent passwd "${1:-$USER}" | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
-user_exists() { getent passwd "${1:-}" >/dev/null; }  # id "${1:-}" &>/dev/null
-group_exists(){ getent group  "${1:-}" >/dev/null; }
+is_root()     { (( EUID == 0 )); }  # POSIX: [ "$(id -u)" -eq 0 ]
+user_home()   { getent passwd -- "${1:-$USER}" | cut -d: -f6; }  # sh -c "echo ~${1:-$USER}"
+user_exists() { getent passwd -- "${1:-}" >/dev/null; }  # id "${1:-}" &>/dev/null
+group_exists(){ getent group  -- "${1:-}" >/dev/null; }
 create_system_user() {
 	local user=$1
 	local name=${2:-}
