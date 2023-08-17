@@ -70,5 +70,21 @@ if snap list firefox &>/dev/null; then
 	setup_run sudo snap remove firefox
 fi
 
+message "Decrease syslog verbosity in rtkit-daemon used by Firefox"
+override=/etc/systemd/system/rtkit-daemon.service.d/override.conf
+sudo mkdir -p -- "${override%/*}"
+cat <<-EOF | sudo tee -- "$override"
+# Created by ${SETUP_NAME}
+# https://github.com/MestreLion/seten
+
+# Decrease syslog verbosity in rtkit-daemon used by Firefox
+# to avoid it spamming "Supervising X threads of X processes of Y users."
+# https://bbs.archlinux.org/viewtopic.php?id=248893
+[Service]
+LogLevelMax=info
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart rtkit-daemon.service  # needed to silence active service
+
 message "Install Firefox from Mozilla Team PPA"
 install_package firefox
