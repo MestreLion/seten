@@ -26,7 +26,7 @@ packages=(
 	default-jdk             # Java 11, will possibly be 17 (both LTS)
 	deluge                  # Torrent GUI client
 	{d,dpkg-,info2}www      # Docs on browser! Pulls apache2
-	exfat-utils             # full exFAT filesystem support (PS4, SD Cards)
+	exfatprogs              # full exFAT filesystem support (PS4, SD Cards)
 	git{,g,-doc}            # Git and tools
 	git-restore-mtime       # Bumping popcorn ;-)
 	gnome-cards-data        # For aisleriot
