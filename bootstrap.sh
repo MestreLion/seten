@@ -91,8 +91,8 @@ fi
 
 if [[ -d "$dir" ]]; then
 	git -C "$dir" fetch
-	git -C "$dir" checkout --force main
-	git -C "$dir" reset --hard origin/main
+	git -C "$dir" checkout --quiet --force main
+	git -C "$dir" reset --quiet --hard origin/main
 else
 	git clone -- "$repo" "$dir"
 fi

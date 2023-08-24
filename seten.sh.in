@@ -25,15 +25,16 @@ else
 fi
 
 #------------------------------------------------------------------------------
+# Keep this section in sync with bootstrap.sh!
 
 upgrade() (
 	git -C "$SETUP_DIR" fetch
-	git -C "$SETUP_DIR" checkout --force main
-	git -C "$SETUP_DIR" reset --hard origin/main
+	git -C "$SETUP_DIR" checkout --quiet --force main
+	git -C "$SETUP_DIR" reset --quiet --hard origin/main
 	"$SETUP_DIR"/install.sh
 )
 
-# Pre-parse for -U|--upgrade, ignoring if after '--'. Keep in sync with bootstrap.sh!
+# Pre-parse for -U|--upgrade, ignoring if after '--'
 for arg in "$@"; do
 	if [[ "$arg" == '--' ]]; then break; fi
 	if [[ "$arg" == "-U" || "$arg" == "--upgrade" ]]; then upgrade; exit; fi
