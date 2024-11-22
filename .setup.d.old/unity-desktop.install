@@ -61,3 +61,15 @@ gsettings set com.canonical.indicator.keyboard  visible  false
 # See /usr/share/doc/gtk3-nocsd/README.Debian
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=823914
 install_package libgtk3-nocsd0:i386
+
+# Disable auto-suspend on login screen (lightdm greeter)
+# https://askubuntu.com/questions/1337649
+# https://gitlab.gnome.org/GNOME/gnome-control-center/-/issues/22
+# https://askubuntu.com/questions/942366
+# https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/1928305
+# FIXME: Investigate further
+sudo -u lightdm dbus-launch gsettings set com.canonical.unity.settings-daemon.plugins.power sleep-inactive-ac-timeout       0          # Default: 1200 (20 minutes)
+sudo -u lightdm dbus-launch gsettings set com.canonical.unity.settings-daemon.plugins.power sleep-inactive-battery-timeout  0          # Default: 1200 (20 minutes)
+sudo -u lightdm dbus-launch gsettings set com.canonical.unity.settings-daemon.plugins.power sleep-inactive-ac-type          'nothing'  # Default: 'suspend'
+sudo -u lightdm dbus-launch gsettings set com.canonical.unity.settings-daemon.plugins.power sleep-inactive-battery-type     'nothing'  # Default: 'suspend'
+sudo systemctl restart lightdm.service
