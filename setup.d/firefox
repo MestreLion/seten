@@ -2,10 +2,18 @@
 # Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
+# FIXME: Update to use the new apt repository instead of Mozilla Team PPA
+# https://support.mozilla.org/pt-BR/kb/instale-o-firefox-no-linux
+# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
+
 # Replace Firefox snap with a DEB packaging from Mozilla Team PPA
 # Due to snap containment, some software such as gnome extensions and warsaw
 #  do not work with the Snap version
-# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
+
+# TODO: Garbled sound
+# if speech-dispatcher < 0.10.0, edit /etc/speech-dispatcher/speechd.conf:
+# AudioPulseMinLength 1764
+# https://askubuntu.com/a/1361901/11015
 
 # -----------------------------------------------------------------------------
 
