@@ -38,6 +38,8 @@ CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
 DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
 # shellcheck disable=SC2034
 BIN_HOME=${XDG_BIN_HOME:-"$HOME/.local/bin"}  # Not official, but widely used
+# shellcheck disable=SC2034
+STATE_HOME=${XDG_STATE_HOME:-"$HOME/.local/state"}
 
 # Set and source the config file, silently ignoring if it does not exist
 # Factory default is intentionally not affected by SETUP_SLUG
