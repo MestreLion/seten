@@ -2,14 +2,13 @@
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 #
-# TODO: Configure External Tools
-# TODO: Add gedi: https://github.com/isamert/gedi
+# TODO: Consider gedi "plugin": https://github.com/isamert/gedi. Seems outdated
 # TODO: Enable sh highlight for .install files
 #       https://stackoverflow.com/questions/1201890
 # -----------------------------------------------------------------------------
 
 DESCRIPTION='Gedit plugins and preferences'
-ARGS='[MAX_RECENTS]'
+ARGS=''
 
 setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
 # shellcheck source=../setuplib
@@ -21,52 +20,19 @@ include gsettings
 
 # -----------------------------------------------------------------------------
 
-recents=${1:-${SETUP_GEDIT_MAX_RECENTS:-50}}; integer "$recents" "MAX_RECENTS"
-
-# -----------------------------------------------------------------------------
-
 packages=(
 	gedit
 	gedit-plugins
-	gedit-plugin-text-size   # Strangely not included above
-#	gedit-developer-plugins  # does not work, not very useful, pulls way too many packages
 )
 
-# Plugins
-# See https://wiki.gnome.org/Apps/Gedit#Plugins
-#gedit-plugin-bookmarks
-#gedit-plugin-bracket-completion
-#gedit-plugin-character-map
-#gedit-plugin-code-comment
-#gedit-plugin-color-picker
-#gedit-plugin-color-schemer
-#gedit-plugin-commander
-#gedit-plugin-draw-spaces
-#gedit-plugin-find-in-files
-#gedit-plugin-git
-#gedit-plugin-join-lines
-#gedit-plugin-multi-edit
-#gedit-plugin-session-saver
-#gedit-plugin-smart-spaces
-#gedit-plugin-synctex
-#gedit-plugin-terminal
-#gedit-plugin-text-size
-#gedit-plugin-translate
-#gedit-plugin-word-completion
-
-
 pluginadd=(
-	changecase
 	codecomment
 	drawspaces
-	externaltools
-	findinfiles
-#	git             # interesting, but disruptive
 	joinlines
-	snippets
-	sort            # already enabled in 3.37.2
+	quickhighlight
+	sessionsaver
+	smartspaces
 	textsize
-#	translate       # not useful
 	wordcompletion
 )
 
@@ -74,35 +40,74 @@ plugindel=(
 	modelines
 )
 
+style=cobalt
+
+# Default set in Ubuntu 24.04:
+#	docinfo
+#	filebrowser
+#	modelines
+#	sort
+#	spell
+
+# Available plugins as of Ubuntu 24.04:
+# https://gitlab.gnome.org/World/gedit/gedit/-/blob/master/plugins/list-of-gedit-plugins.md
+# gedit-plugin-bookmarks
+# gedit-plugin-bracket-completion
+# gedit-plugin-character-map
+# gedit-plugin-code-comment
+# gedit-plugin-color-picker
+# gedit-plugin-draw-spaces
+# gedit-plugin-git
+# gedit-plugin-join-lines
+# gedit-plugin-multi-edit
+# gedit-plugin-session-saver
+# gedit-plugin-smart-spaces
+# gedit-plugin-terminal
+# gedit-plugin-text-size
+# gedit-plugin-word-completion
+
+# Removed Plugins:
+# 2024-09-25 (after 48.0)
+# https://gitlab.gnome.org/World/gedit/gedit/-/commit/3f217ab4b1777a713e0c3646033dc9690e768240
+#	externaltools
+# https://gitlab.gnome.org/World/gedit/gedit/-/commit/426e8c2efde9a7dcc7aaaecb47348b199d00e16a
+#	snippets
+# 46.0-1 (2023-11-06)
+#	gedit-plugin-color-schemer
+#	gedit-plugin-synctex
+# 43.1-1 (2022-11-18)
+#	gedit-plugin-commander
+#	gedit-plugin-find-in-files
+#	gedit-plugin-translate
+# gedit-developer-plugins removed shortly before Ubuntu 20.04
+# https://bugs.launchpad.net/ubuntu/+source/gedit-developer-plugins/+bug/1871285
+# changecase functionality integrated into gedit/GtkSourceView in late 2013
+
+# -----------------------------------------------------------------------------
+
+# 3.XX.yy until at least 3.35.90, XX.y after 43.1 or before
+gedit_version() { gedit --version | awk '{print $4}'; }
+
 # -----------------------------------------------------------------------------
 
 # Install plugins
 install_package "${packages[@]}"
 
-# Set preferences
+# Relevant Gsettings paths
 gsrootpath=org.gnome.gedit
 gsprefpath=${gsrootpath}.preferences
 gsplugpath=${gsrootpath}.plugins
 
-# General
-gsettings set "$gsprefpath".editor  display-line-numbers    true        # View
+# General Preferences
+# Defaults: https://gitlab.gnome.org/World/gedit/gedit/-/blob/master/data/org.gnome.gedit.gschema.xml.in
 gsettings set "$gsprefpath".editor  display-right-margin    true        # View
-gsettings set "$gsprefpath".editor  highlight-current-line  true        # View
-gsettings set "$gsprefpath".editor  bracket-matching        true        # View
-gsettings set "$gsprefpath".editor  auto-indent             true        # Editor
 gsettings set "$gsprefpath".editor  auto-save               true        # Editor
-gsettings set "$gsprefpath".editor  create-backup-copy      false       # Editor, default in Ubuntu 18.04
-gsettings set "$gsprefpath".editor  scheme                  'cobalt'    # Fonts & Colors
-
-# max-recents dconf key was removed in 3.35.90 (Ubuntu 20.04 onwards)
-# https://gitlab.gnome.org/GNOME/gedit/-/commit/36f727480d185e07e8cf338a405ae564f43a8ddb
-# https://gitlab.gnome.org/GNOME/gedit/-/issues/357
-# And so did the entire recents list in the "Open" button
-# https://gitlab.gnome.org/GNOME/gedit/-/commit/27f54a9aed82109a512743b5e819b18004c19de7
-# https://gitlab.gnome.org/GNOME/gedit/-/issues/276
-# https://gitlab.gnome.org/GNOME/gedit/-/issues/278
-if ! version_greater "$(gedit --version | awk '{print $4}')" 3.35.90; then
-	gsettings set "$gsprefpath".ui  max-recents  "$recents"
+if version_greater "$(gedit_version)" 49; then
+	# https://gitlab.gnome.org/World/gedit/gedit/-/commit/f7dc3953e0da197c20178196e9edcc311df78853
+	gsettings set "$gsprefpath".editor  'style-scheme-for-light-theme-variant'  "$style"
+	gsettings set "$gsprefpath".editor  'style-scheme-for-dark-theme-variant'   "$style"
+else
+	gsettings set "$gsprefpath".editor  scheme  "$style"
 fi
 
 # Plugins
