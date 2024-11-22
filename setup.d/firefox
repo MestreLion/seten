@@ -2,23 +2,15 @@
 # Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
-# FIXME: Update to use the new apt repository instead of Mozilla Team PPA
-# https://support.mozilla.org/pt-BR/kb/instale-o-firefox-no-linux
-# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
-
-# Replace Firefox snap with a DEB packaging from Mozilla Team PPA
+# Replace Firefox snap with a DEB packaging from official Mozilla APT repository
 # Due to snap containment, some software such as gnome extensions and warsaw
 #  do not work with the Snap version
-
-# TODO: Garbled sound
-# if speech-dispatcher < 0.10.0, edit /etc/speech-dispatcher/speechd.conf:
-# AudioPulseMinLength 1764
-# https://askubuntu.com/a/1361901/11015
-
+# https://support.mozilla.org/en-US/kb/install-firefox-linux
+# https://askubuntu.com/a/1516224
 # -----------------------------------------------------------------------------
 
-DESCRIPTION='Firefox DEB package from Mozilla Team PPA'
-ARGS=''
+DESCRIPTION='Firefox DEB package from Mozilla Repository'
+ARGS='[LANGUAGE_PACK]'
 
 setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
 # shellcheck source=../setuplib
@@ -28,71 +20,90 @@ fi
 
 # -----------------------------------------------------------------------------
 
-message "Add Mozilla Team PPA"
-setup_run sudo add-apt-repository --yes --enable-source "ppa:mozillateam/ppa"
+l10n=${1:-${SETUP_FIREFOX_L10N:-}}
 
-message "Pin origin and allow unattended upgrades"
-origin=LP-PPA-mozillateam  # from Origin field in repository Release file
-cat <<-EOF | sudo tee /etc/apt/preferences.d/firefox-ppa-pin
-	# Created by ${SETUP_NAME}
-	# https://github.com/MestreLion/seten
+# -----------------------------------------------------------------------------
 
-	# Pin the Mozilla Team PPA for firefox, DEB package
-	# So it trumps the firefox from Ubuntu that installs the Snap package
-	# https://launchpad.net/~mozillateam/+archive/ubuntu/ppa
+repohost=packages.mozilla.org
+repourl=https://${repohost}/apt
+keyurl=${repourl}/repo-signing-key.gpg
+keyfile=/etc/apt/keyrings/${repohost}.asc
+expected=35BAA0B33E9EB396F59CA838C0BA5CE6DC6315A3
+repofile=/etc/apt/sources.list.d/mozilla.sources
+suite=mozilla
+packages=( firefox )
+if [[ "$l10n" ]]; then
+	packages+=( firefox-l10n-"$l10n" )
+fi
+
+# Requirements
+install_package wget gpg
+
+message "Download and check Mozilla APT repository signing key from $keyurl to $keyfile"
+sudo mkdir -p -m 755 -- "${keyfile%/*}"  # already exists in Ubuntu 24.04
+wget -q -O- -- "$keyurl" | sudo tee -- "$keyfile"
+fingerprint=$(
+	gpg -n -q --import --import-options import-show "$keyfile" |
+		awk '/pub/{getline; gsub(/^ +| +$/,""); print}'
+)
+if ! [[ "$fingerprint" == "$expected" ]]; then
+	fatal "Key fingerprint '$fingerprint' does not match expected '${expected}'"
+fi
+
+message "Add official Mozilla APT repository as $repofile"
+sudo tee "$repofile" <<-EOF
+	$(signature)
+
+	# Official Mozilla APT repository for Firefox
+	# https://support.mozilla.org/en-US/kb/install-firefox-linux
+	# https://askubuntu.com/a/1516224
+	Types: deb
+	URIs: $repourl
+	Suites: $suite
+	Components: main
+	Signed-By: $(escape "$keyfile")
+EOF
+
+message "Pin origin and allow unattended upgrades for firefox DEB packages"
+sudo tee /etc/apt/preferences.d/mozilla <<-EOF
+	$(signature)
 
 	# See also:
-	# /etc/apt/apt.conf.d/51unattended-upgrades-firefox-ppa
-	# https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04
+	# https://support.mozilla.org/en-US/kb/install-firefox-linux
+	# https://askubuntu.com/a/1516224
 	# https://manpages.debian.org/unstable/apt/apt_preferences.5.en.html
 
-	# "Disable" all other packages from this PPA by setting the lowest priority
+	# "Disable" all other packages from this repository by setting the lowest priority
 	Package: *
-	Pin: release o=${origin}
+	Pin: origin ${repohost}
 	Pin-Priority: 1
 
-	# Enable firefox over all other repositories
+	# Pin the Mozilla APT repository for firefox packages
+	# So it trumps the firefox DEB from Ubuntu that installs the Snap package
 	# Priority > 1000: allow downgrades, allow non-target
 	Package: firefox*
-	Pin: release o=${origin}
+	Pin: origin ${repohost}
 	Pin-Priority: 1001
 EOF
-cat <<-EOF | sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox-ppa
-	# Created by ${SETUP_NAME}
-	# https://github.com/MestreLion/seten
-
-	# Allow unattended upgrades for Mozilla Team PPA
-	# See also /etc/apt/preferences.d/firefox-ppa-pin
-
-	Unattended-Upgrade::Allowed-Origins:: "${origin}:\${distro_codename}";
+sudo tee /etc/apt/apt.conf.d/51unattended-upgrades-firefox <<-EOF
+	$(signature)
+	Unattended-Upgrade::Origins-Pattern { "archive=${suite}"; };
 EOF
+
+message "Close Firefox"
+try killall firefox
 
 if package_installed firefox && { package_version firefox | grep -q snap; }; then
 	message "Remove DEB package from Ubuntu's apt repository (Snap wrapper)"
 	# Firefox in Ubuntu's apt repository is a wrapper for the snap
-	setup_run sudo apt purge firefox
+	sudo apt purge firefox
 fi
 
 if snap list firefox &>/dev/null; then
 	message "Remove Firefox Snap"
-	setup_run sudo snap remove firefox
+	sudo snap remove firefox
 fi
 
-message "Decrease syslog verbosity in rtkit-daemon used by Firefox"
-override=/etc/systemd/system/rtkit-daemon.service.d/override.conf
-sudo mkdir -p -- "${override%/*}"
-cat <<-EOF | sudo tee -- "$override"
-# Created by ${SETUP_NAME}
-# https://github.com/MestreLion/seten
-
-# Decrease syslog verbosity in rtkit-daemon used by Firefox
-# to avoid it spamming "Supervising X threads of X processes of Y users."
-# https://bbs.archlinux.org/viewtopic.php?id=248893
-[Service]
-LogLevelMax=info
-EOF
-sudo systemctl daemon-reload
-sudo systemctl restart rtkit-daemon.service  # needed to silence active service
-
-message "Install Firefox from Mozilla Team PPA"
-install_package firefox
+message "Install Firefox from Mozilla APT Repository"
+sudo apt update
+install_package "${packages[@]}"
