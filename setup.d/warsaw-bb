@@ -17,7 +17,8 @@ fi
 
 # -----------------------------------------------------------------------------
 
-deb=warsaw_setup64.deb
+url=https://cloud.gastecnologia.com.br/bb/downloads/ws/debian/warsaw_setup64.run
+file=${url##*/}
 dir=$(xdg-user-dir DOWNLOAD)
 file=${dir}/${deb}
 
@@ -29,12 +30,14 @@ checksum() { { sha256sum -- "$1" 2>/dev/null || echo; } | cut -d' ' -f1; }
 
 sum=$(checksum "$file")
 
-wget -N -P "$dir" -- "https://cloud.gastecnologia.com.br/bb/downloads/ws/$deb"
+wget -N -P "$dir" -- "$url"
 
-if ! package_installed warsaw || [[ "$(checksum "$file")" != "$sum" ]] ; then
-	setup_run sudo dpkg -i -- "$file"
-	setup_run sudo apt install -f -y
-fi
+#if ! package_installed warsaw || [[ "$(checksum "$file")" != "$sum" ]] ; then
+#	setup_run sudo dpkg -i -- "$file"
+#	setup_run sudo apt install -f -y
+#fi
+
+ch
 
 # if there are errors on enabling/disabling with systemctl:
 # sudo update-rc.d warsaw defaults-disabled
