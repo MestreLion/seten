@@ -78,9 +78,7 @@ message 'Setup SSH'
 # - Disable SSH password login for all users
 # - Extend timeout to 120s * 720 = 24h
 # - Disable X11 Forwarding
-# - Allow SSH tunneling (disabled)
-# - Disable Debian banner (disabled)
-# - Disable sending
+# - Disable Debian banner
 # For more hardnening suggestions:
 # https://www.digitalocean.com/community/tutorials/how-to-harden-openssh-on-ubuntu-18-04
 configdir=/etc/ssh/sshd_config.d
@@ -104,16 +102,15 @@ setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	$(signature)
 
 	# Disable SSH login for root
+	# Default: prohibit-password
 	PermitRootLogin no
 
 	# Disable SSH password login for all users
+	# Default: yes
 	PasswordAuthentication no
 
-	# Honor PermitRootLogin=no and PasswordAuthentication=no when UsePAM=yes
-	# Already the default in Debian, as is UsePAM=yes
-	ChallengeResponseAuthentication no
-
 	# Disable inactivity timeout AND set unresponsiveness timeout to 120s(x3)
+	# Default: 0
 	ClientAliveInterval 120
 
 	# Already default
@@ -121,15 +118,60 @@ setup_run sudo tee "$configdir"/50-"$SETUP_SLUG"-general.conf <<-EOF
 	TCPKeepAlive yes
 
 	# Disable X11 Forwarding
-	# Default in Debian is yes
+	# Default: yes in Debian, as set in /etc/ssh/sshd_config
 	X11Forwarding no
 
-	# Allow SSH tunneling
-	#GatewayPorts yes
-
 	# Disable Debian/Ubuntu version string (visible with ssh -v)
-	#DebianBanner no
+	# Default: yes in Debian, not present in /etc/ssh/sshd_config
+	DebianBanner no
 
+	# ---------------------------------------------------------------------------------
+	# Other useful security settings
+	# Descriptions other than NOTEs taken from:
+	# https://manpages.ubuntu.com/manpages/en/man5/sshd_config.5.html
+
+	# Specifies whether remote hosts are allowed to connect to ports forwarded for the
+	# client.  By default, sshd(8) binds remote port forwardings to the loopback address.
+	# This prevents other remote hosts from connecting to forwarded ports.  GatewayPorts
+	# can be used to specify that sshd should allow remote port forwardings to bind to
+	# non-loopback addresses, thus allowing other hosts to connect.  The argument may be
+	# no to force remote port forwardings to be available to the local host only, yes to
+	# force remote port forwardings to bind to the wildcard address, or clientspecified to
+	# allow the client to select the address to which the forwarding is bound.  The
+	# default is no.
+	# NOTE: Does not actuallly _disable_ SSH tunnels, but rather at most only _restricts_
+	# them to bind the target port to listen only on localhost instead of all address.
+	# In other words, allow or forbid SSH tunnels to be used by remote hosts.
+	#GatewayPorts no
+
+	# Specifies whether pty(4) allocation is permitted.  The default is yes.
+	# NOTE: equivalent to force client 'ssh -T'
+	#PermitTTY yes
+
+	# Specifies whether ~/.ssh/environment and environment= options in
+	# ~/.ssh/authorized_keys are processed by sshd(8).  Valid options are yes, no or a
+	# pattern-list specifying which environment variable names to accept (for example
+	# "LANG,LC_*").  The default is no.  Enabling environment processing may enable users
+	# to bypass access restrictions in some configurations using mechanisms such as
+	# LD_PRELOAD.
+	# NOTE: Debian uses 'AcceptEnv LANG LC_*', which is unrelated to this
+	#PermitUserEnvironment no
+
+	# Specifies whether tun(4) device forwarding is allowed.  The argument must be yes,
+	# point-to-point (layer 3), ethernet (layer 2), or no.  Specifying yes permits both
+	# point-to-point and ethernet.  The default is no.
+	# Independent of this setting, the permissions of the selected tun(4) device must
+	# allow access to the user.
+	# NOTE: Somewhat misleading name, this relates to SSH VPNs and is NOT relevant for
+	# what is informally called "SSH Tunnels", which are port forwardings (somewhat)
+	# controlled by the 'GatewayPorts' setting above
+	#PermitTunnel no
+
+	# Specifies whether to allow keyboard-interactive authentication.  The default is yes.
+	# The argument to this keyword must be yes or no.  ChallengeResponseAuthentication is
+	# a deprecated alias for this.
+	# NOTE: Default in Debian is no, as set in /etc/ssh/sshd_config
+	#KbdInteractiveAuthentication no
 EOF
 
 # Change listening port
@@ -176,4 +218,5 @@ else
 	setup_run sudo ufw allow SSH
 fi
 try sudo ufw reload
-sudo systemctl reload ssh
+if ! systemctl --quiet is-enabled ssh; then sudo systemctl enable ssh; fi
+try sudo systemctl try-reload-or-restart ssh.{service,socket}
