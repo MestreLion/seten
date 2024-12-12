@@ -123,11 +123,7 @@ if [[ -z "${SETUP_ARCH:-}" ]]; then
 	SETUP_ARCH=$(arch)
 fi
 if [[ -z "${SETUP_APT_ARCH:-}" ]]; then
-	# See dpkg-architecture
-	SETUP_APT_ARCH=$(
-		awk -v arch="$SETUP_ARCH" '/^#/{next} $2 == arch{print $1}' \
-			/usr/share/dpkg/cputable 2>/dev/null || true
-	)
+	SETUP_APT_ARCH=$(dpkg --print-architecture)
 fi
 
 
