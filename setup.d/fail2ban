@@ -62,4 +62,16 @@ setup_run sudo tee "$config" <<-EOF
 	# Default: ssh (==22)
 	port = ${port}
 EOF
+
+# Only needed in fail2ban < 1.1.0
+#config=/etc/fail2ban/fail2ban.local
+#setup_run sudo tee "$config" <<-EOF
+#	$(signature)
+
+#	[DEFAULT]
+#	# Workaround to silence "WARNING 'allowipv6' not defined in 'Definition'. Using default one: 'auto'"
+#	# https://github.com/fail2ban/fail2ban/discussions/3699
+#	# Only needed in fail2ban < v1.1.0 (currently v1.0.2)
+#	allowipv6 = auto
+#EOF
 setup_run sudo systemctl restart fail2ban
