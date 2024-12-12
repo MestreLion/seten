@@ -1,8 +1,37 @@
 # TOTALLY WIP!!!
 # USE apt-manage (from repolib)!!!
-
+# Also see ../setuplib@add_ppa()
+#
+# Dependencies changelog:
+# - 'apt-transport-https' no longer needed since apt 1.5 (2017)
+# - 'gpg --dearmor' not needed, '.asc' armored ASCII keys supported since apt 1.4
+# - See (and update) brave-browser, firefox
+#
 # sudo apt install python3-software-properties
+#   (already installed, requirement of ubuntu-desktop{,-minimal})
 # noinspection PyPep8Naming
+
+
+https://code.launchpad.net/~smoser/software-properties/trunk.lp1667725-https-signing-key/+merge/351824
+#+def get_ppa_signing_key_data(info=None):
+#+    """Return signing key data in armored ascii format for the provided ppa.
+#+
+#+    If 'info' is a dictionary, it is assumed to be the result
+#+    of 'get_ppa_info(ppa)'.  If it is a string, it is assumed to
+#+    be a ppa_path.
+#+
+#+    Return value is a text string."""
+#+    if isinstance(info, dict):
+#+        link = info["self_link"]
+#+    else:
+#+        link = get_ppa_info(mangle_ppa_shortcut(info))["self_link"]
+#+
+#+    return get_info_from_https(link + "?ws.op=getSigningKeyData",
+#+                               accept_json=True, retry_delays=(1, 2, 3))
+
+# https://api.launchpad.net/devel.html
+# https://api.launchpad.net/devel/~deadsnakes/+archive/ubuntu/ppa?ws.op=getSigningKeyData
+#
 import softwareproperties.SoftwareProperties as softprop
 
 
