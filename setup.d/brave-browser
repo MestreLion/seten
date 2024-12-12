@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Copyright (C) 2024 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+#
+# Adapted from https://brave.com/linux/
+# TODO: See lib/add_ppa.py
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Brave Browser from Brave Release APT Repository'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+repourl=https://brave-browser-apt-release.s3.brave.com/
+keyurl=${repourl%/}/brave-browser-archive-keyring.gpg
+keyfile=/etc/apt/keyrings/${keyurl##*/}
+expected=DBF1A116C220B8C7164F98230686B78420038257
+repofile=/etc/apt/sources.list.d/brave-browser-release.sources
+suite=stable
+component=main
+packages=( brave-browser )
+
+# Requirements
+install_package wget gpg
+
+message "Download and check repository signing key from $keyurl to $keyfile"
+sudo mkdir -p -m 755 -- "${keyfile%/*}"  # already exists in Ubuntu 24.04
+wget -q -O- -- "$keyurl" | sudo tee -- "$keyfile" >/dev/null
+fingerprint=$(
+	gpg -n -q --import --import-options import-show "$keyfile" |
+		awk '/pub/{getline; gsub(/^ +| +$/,""); print}'
+)
+if ! [[ "$fingerprint" == "$expected" ]]; then
+	fatal "Key fingerprint '$fingerprint' does not match expected '${expected}'"
+fi
+
+message "Add official Brave Software APT repository as $repofile"
+sudo tee "$repofile" <<-EOF
+	$(signature)
+
+	# Official Brave Software APT repository for Brave Browser
+	# https://brave.com/linux/
+	Types: deb
+	URIs: ${repourl}
+	Suites: ${suite}
+	Components: ${component}
+	Architectures: ${SETUP_APT_ARCH}
+	Signed-By: $(escape "$keyfile")
+EOF
+
+if snap list brave &>/dev/null; then
+	message "Remove Brave Snap"
+	sudo snap remove brave
+fi
+
+message "Install Brave Browser from its APT Repository"
+sudo apt update
+install_package "${packages[@]}"
