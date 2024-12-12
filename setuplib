@@ -241,7 +241,7 @@ backup_file() {
 		fi
 		target=$(bakfile "$source")
 	fi
-	setup_run sudo_for "$target" cp -p --no-clobber -- "$source" "$target"
+	setup_run sudo_for "$target" cp -p --update=none -- "$source" "$target"
 }
 
 create_temp_dir() {
