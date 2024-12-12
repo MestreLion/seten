@@ -44,8 +44,8 @@ if ((current < 2 * expected)); then
 		# Original setting:
 		#     ${current}
 		# Reference values:
-		#    Kernel <= 5.10 (Ubuntu 18.04, 20.04.2): fixed at 8192 (8Ki)
-		#    Kernel >= 5.11 (Ubuntu 20.04.3, 22.04): ~64Ki for 8GiB RAM (use up to ~1% RAM)
+		#    Kernel <  5.10 (Ubuntu 18.04, 20.04.2): fixed at 8192 (8Ki)
+		#    Kernel >= 5.11 (Ubuntu 20.04.3, 22.04): up to ~64Ki with 8GiB RAM (use up to ~1% RAM)
 		#    See https://github.com/torvalds/linux/commit/92890123749bafc317bbfacbe0a62
 		#    Some sources say each _used_ watch takes ~1080B of RAM in a 64-bit system
 		# Current watch actual usage:
