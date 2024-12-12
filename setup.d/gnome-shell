@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Copyright (C) 2024 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Gnome Shell preferences'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../../setuplib}
+# shellcheck source=../../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+include gsettings
+
+# -----------------------------------------------------------------------------
+
+
+# - Dark Theme:
+#	/org/gnome/desktop/interface/color-scheme: 'prefer-dark'
+#	/org/gnome/desktop/interface/gtk-theme 'Yaru-dark'
+#	/org/gnome/desktop/interface/icon-theme 'Yaru-dark'
+# - Dash
+# - User Face: https://superuser.com/a/1863052/68321
+# - Guest Account
+# - Mine Associations
+#	text/plain=org.gnome.gedit.desktop;
+#	application/vnd.debian.binary-package=gdebi.desktop;
+# - Detach Modal Windows (without Gnome Tweaks)
+# - Default Font / Scaling
+#	org.gnome.desktop.interface.monospace-font-name (13 if 100%, 12-11 if 125% on Xorg)
+# - Xorg vs Wayland
+# - Install language packs to make sure en_US.UTF8 locale exists
+# - Blank Screen / Lock timeouts
