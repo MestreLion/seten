@@ -3,8 +3,8 @@
 # Copyright (C) 2021 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
 # License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
 
-# See: https://developer.gnome.org/glib/stable/gvariant-text.html
-# and  https://developer.gnome.org/glib/stable/glib-GVariantType.html
+# See: https://docs.gtk.org/glib/gvariant-text-format.html
+# and  https://docs.gtk.org/glib/struct.VariantType.html
 
 gvariant_array() (
 	local op=$1             # Operation to perform: include, remove, clear/new, set

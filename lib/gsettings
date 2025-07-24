@@ -6,7 +6,8 @@
 include gvariant
 
 # Wrapper to gsettings, automatically invoking setup_run on set
-# and dispatching to extra commands
+# and dispatching to extra (sub-)commands such as 'array'.
+# Example: gsettings array include <schema> <key> s foo bar
 gsettings() {
 	cmd=$1
 	shift
@@ -21,7 +22,7 @@ gsettings_array() {
 	local op=$1      # Operation to perform: include, remove, clear/new, set
 	local schema=$2  # GSettings schema
 	local key=$3     # GSettings key
-	local type=$4    # List item type. See gvariant_array()
+	local type=$4    # List item type. See gvariant_array() in ./gvariant
 	shift 4          # Remaining arguments are list items
 
 	local list; list=$(gsettings get "$schema" "$key")
