@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# Copyright (C) 2024 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Packages for Desktop, Ubuntu 24.04'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+
+# -----------------------------------------------------------------------------
+
+groups=(
+	sambashare  # nautilus-share
+	#vboxusers
+)
+
+repos=(
+	ppa:deluge-team/stable         # deluge, also in Ubuntu repositories
+#	ppa:pedrocastro/ppa            # gnome-subtitles, also in repos
+	ppa:solaar-unifying/stable     # solaar, also in repos
+	ppa:boamaod/nautilus-compare   # Will likely be packaged in 25.04
+#	ppa:dnax88/upnp-router-control-daily  # Outdated
+	# xtradeb  # For heroic and possibly others. Maybe pin apps?
+)
+
+# Gedit Alternatives:
+# - Kate: more IDE-like, possibly less than Geany
+# - KWriter: lighter than Kate but same "SourceEdit" widget, possibly closer to Gedit
+# - Pluma: Gedit fork, using very old Gedit UI
+# - Sublime Text (proprietary?)
+# - Xed (https://github.com/linuxmint/xed): promising, native Gtk
+
+
+packages=(
+	aisleriot                    # Not longer installed by default
+	apt-rdepends                 # For apt-tree
+	cargo                        # Rust's Package Manager. Avoiding rustup for now
+	curl                         # surprisingly not installed by default
+	dconf-editor
+	default-jdk                  # Java 21, pulls default-jre
+	deluge
+	exfatprogs                   # full exFAT filesystem support (PS4, SD Cards)
+	gdebi                        # DEB packages viewer/installer GUI
+	git{,g,-doc}
+	git-restore-mtime            # Bumping popcorn ;-)
+	gnome-cards-data             # For aisleriot
+	gparted                      # Installed by default only in installer live session
+	heroic                       # Heroic Games Launcher. Consider using xtradeb PPA
+	imagemagick                  # For xdg-tools (convert, identify)
+	nautilus-{admin,compare,share}
+	popularity-contest           # Popcorn
+	psensor
+	pv                           # For dd-status() and possibly others
+	python3-venv                 # For venv-create()
+	rename                       # file-rename
+	smartmontools                # smartctl
+	solaar                       # Logitech Unifying Keyboard/Mouse receiver
+	steam-installer
+	trash-cli                    # For trash()
+	uhubctl                      # For usb-power (LED Strip control)
+	virtualbox                   # {,-ext-pack,-guest-additions-iso}? Need to auto-accept license?
+	wakeonlan
+
+#	cockpit                   # Systemd admin web service
+#	{d,dpkg-,info2}www        # Docs on browser! Pulls apache2
+#	gnome-subtitles           # Pulls libmono :-(
+#	jq                        # JSON shell manipulation
+#	jstest-gtk                # Consider flatpak: https://jstest-gtk.gitlab.io/
+#	p7zip-full                # 7z archiver
+#	python3-pip               # Not needed for venvs, only manual user-wide installs
+#	qtcreator
+#	rdiff-backup              # backup-home
+#	virtualbox
+#	xdot                      # Dot files viewer, Python's cProfile results
+)
+# No longer needed:
+#	ssh-server  # Installed by seten ssh-server
+
+
+snaps=(
+	pinta
+	upnp-router-control  # Also in Flatpak (preferred by dev) and PPA (outdated)
+)
+snaps_classic=(
+	pycharm-community
+	# vscode ?
+)
+
+
+flatpaks=(
+	org.prismlauncher.PrismLauncher
+		# ~/.local/share/flatpak/overrides/org.prismlauncher.PrismLauncher
+		# [Context]
+		# filesystems=~/install/minecraft/saves
+	com.jaquadro.NBTExplorer
+	com.github.tchx84.Flatseal        # Manage permissions in Flatpak apps
+	# org.upnproutercontrol.UPnPRouterControl
+)
+
+seten=(
+	firefox
+	gedit
+	brave
+	ssh-server
+	fail2ban
+	# minidlna
+	# nautilus
+	# warsaw-bb
+	# nautilus-compare
+	# ... ?
+)
+
+# There's USEFUL stuff in ../.setup.d.old/ubuntu1804 !!!
+
+# Foobar2000 snap
+# RetroArch / Libretro
+# Notepadqq
+# Módulo de Segurança BB (warsaw)
+# Zoom
+
+for repo in "${repos[@]}"; do
+	# Now safe to use and does the right thing! repolib no longer necessary! \o/
+	sudo add-apt-repository -y --no-update "$repo"
+done
+sudo apt-get update
+
+# Participate in Popcorn
+sudo debconf-set-selections <<< 'popularity-contest	popularity-contest/participate	boolean	true'
+if package_installed popularity-contest; then
+	sudo /usr/sbin/dpkg-reconfigure -u popularity-contest
+fi
+
+install_package "${packages[@]}"
+
+sudo snap install "${snaps[@]}"
+sudo snap install --classic "${snaps_classic[@]}"
+
+sudo usermod --append --groups "${groups[@]}" "$SETUP_USER"
