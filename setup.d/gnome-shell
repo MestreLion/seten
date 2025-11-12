@@ -16,6 +16,9 @@ include gsettings
 
 # -----------------------------------------------------------------------------
 
+# Detach Modal Windows (without Gnome Tweaks)
+# https://askubuntu.com/a/193894/11015
+gsettings set org.gnome.mutter attach-modal-dialogs false
 
 # - Dark Theme:
 #	/org/gnome/desktop/interface/color-scheme: 'prefer-dark'
@@ -27,9 +30,15 @@ include gsettings
 # - Mine Associations
 #	text/plain=org.gnome.gedit.desktop;
 #	application/vnd.debian.binary-package=gdebi.desktop;
-# - Detach Modal Windows (without Gnome Tweaks)
 # - Default Font / Scaling
 #	org.gnome.desktop.interface.monospace-font-name (13 if 100%, 12-11 if 125% on Xorg)
 # - Xorg vs Wayland
 # - Install language packs to make sure en_US.UTF8 locale exists
 # - Blank Screen / Lock timeouts
+
+# Bugs:
+# - journalctl (harmless) spam of multiple lines similar to this:
+#		gnome-shell[]: Window manager warning: Overwriting existing binding of keysym 31 with keysym 31 (keycode a).
+#	https://bugs.launchpad.net/ubuntu/+source/gnome-shell/+bug/1857392
+#	Workaround: https://bugs.launchpad.net/ubuntu/+source/gnome-shell/+bug/1857392/comments/13
+#		(may lose some features of Ubuntu's Dash-To-Dock, launching using CTRL+SUPER+1..N, etc)

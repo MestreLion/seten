@@ -44,6 +44,22 @@ remove=( "${SETUP_NAUTILUS_REMOVE[@]}");  debugvar remove
 
 try nautilus -q
 
+# Change Detailed Date column to ISO (if locale format is 'en_**')
+# https://discourse.gnome.org/t/nautilus-46-2-doesnt-respect-date-time-format-set-in-gnome-preferences/21367/14
+# https://gitlab.gnome.org/GNOME/nautilus/-/issues/3352
+# https://l10n.gnome.org/module/nautilus/
+sudo msgfmt - -o /usr/share/locale/en/LC_MESSAGES/nautilus.mo <<-'EOF'
+	msgid "%m/%d/%Y %H:%M"
+	msgstr "%Y-%m-%d %H:%M"
+
+	msgid "%m/%d/%Y %I:%M %p"
+	msgstr "%Y-%m-%d %I:%M %p"
+
+	msgid "translator-credits"
+	msgstr ""
+	"Rodrigo Silva"
+EOF
+
 gsrootpath=org.gnome.nautilus
 
 # Change settings
