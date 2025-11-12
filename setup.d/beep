@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Enable PC Speaker ("buzzer") in X11 sessions'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+# https://askubuntu.com/a/587311/11015
+message "Enable pcspkr kernel driver (until reboot)"
+sudo modprobe pcspkr
+# For permanent changes, remove from blacklist in /etc/modprobe.d/blacklist.conf
+
+# https://github.com/spkr-beep/beep/blob/master/PERMISSIONS.md
+# Not needed - beep package already adds /usr/lib/udev/rules.d/70-pcspkr-beep.rules
+#message "Create UDEV rules for the PC Speaker"
+#conf=/etc/udev/rules.d/70-pcspkr-beep.rules
+#if ! [[ -e "$conf" ]]; then
+#	setup_run sudo tee "$conf" <<-EOF
+#		$(signature)
+
+#		# Give write access to the PC speaker to the user logged in on the current virtual console
+#		# https://github.com/spkr-beep/beep/blob/master/PERMISSIONS.md
+#		ACTION=="add", SUBSYSTEM=="input", ATTRS{name}=="PC Speaker", ENV{DEVNAME}!="", TAG+="uaccess"
+#	EOF
+#fi

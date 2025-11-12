@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Copyright (C) 2025 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='TFTPd'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+
+# https://irfantechinfo.blogspot.com/2013/09/installing-tftp-server-on-ubuntu-1004.html
+
+message "Setup TFTPd"
+
+install_package tftpd-hpa
+
+sudo cp /etc/default/tftpd-hpa{,.bak}
+sudo nano /etc/default/tftpd-hpa
+# TFTP_OPTIONS="--secure --verbose --create"
+
+sudo mkdir -p /srv/tftp
+sudo chmod -R 777 /srv/tftp
+sudo chown -R nobody:nogroup /srv/tftp
+
+sudo ufw allow tftp
+sudo ufw reload
+sudo systemctl restart tftpd-hpa
+
+# /etc-

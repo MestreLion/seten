@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Enable DMKS drivers (Broadcom, Virtualbox) with Secure Boot enabled'
+ARGS='[SUBNET]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+# https://wiki.ubuntu.com/UEFI/SecureBoot
+sudo update-secureboot-policy --enroll-key
+message "Now reboot your computer and select ENROLL MOK on reboot. It will ask for the password you just defined"
+message "Run this again after BIOS/UEFI Firmware upgrades"

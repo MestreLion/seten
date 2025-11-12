@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Copyright (C) 2025 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Sudo and Sudoers tweaks'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+
+visudo -f /etc/sudoers.d/"$SETUP_USER" <<-EOF
+	# Manually added by Rodrigo
+	# https://askubuntu.com/a/159009/11015
+
+	$SETUP_USER $(hostname) = (root) NOPASSWD: /usr/bin/dmesg
+
+	# Alternative:
+	# ALL ALL = NOPASSWD: /full/path/to/command,/another/command
+EOF

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Copyright (C) 2022 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Virtualbox and required tweaks'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+# - Install Virtualbox (from Oracle APT Repository)
+# https://www.virtualbox.org/wiki/Linux_Downloads
+# wget -O- https://www.virtualbox.org/download/oracle_vbox_2016.asc | sudo gpg --yes --output /usr/share/keyrings/oracle-virtualbox-2016.gpg --dearmor
+# deb [arch=amd64 signed-by=/usr/share/keyrings/oracle-virtualbox-2016.gpg] https://download.virtualbox.org/virtualbox/debian <mydist> contrib
+#   <mydist> = 'noble'
+#
+# The key fingerprint for oracle_vbox_2016.asc is
+# B9F8 D658 297A F3EF C18D  5CDF A2F6 83C5 2980 AECF
+# Oracle Corporation (VirtualBox archive signing key) <info@virtualbox.org>
+#
+# sudo apt-get update
+# sudo apt-get install virtualbox-7.1
+
+# - Add user to 'vboxusers' group
+# ...
+
+# (OPTIONAL) If Secure Boot is enabled, Enroll MOK to enable 'vboxdrv' dkms driver
+# ... run ./wireless-secure-boot
+
+# - Disable auto-loading of conflicting KVM kernel module in Linux >= 6.12
+# https://askubuntu.com/a/1547957/11015
+message "Disable KVM auto-load on boot"
+confdir=/etc/default/grub.d
+conf=${confdir}/disable-kvm-auto-load.cfg
+if ! [[ -e "$conf" ]]; then
+	setup_run sudo tee "$conf" <<-EOF
+		$(signature)
+
+		# Disable KVM auto-load on boot, as it conflicts with 'vboxdrv' needed by VirtualBox
+		# https://askubuntu.com/a/1547957/11015
+		GRUB_CMDLINE_LINUX_DEFAULT="\$GRUB_CMDLINE_LINUX_DEFAULT kvm.enable_virt_at_load=0"
+	EOF
+fi
+message "Update Grub"
+setup_run sudo update-grub

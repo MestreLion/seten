@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Copyright (C) 2025 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='UFW rules for Deluge BitTorrent Client'
+ARGS='[PORT]'
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+port=${1:-${SETUP_DELUGE_PORT:-}}  # 56881
+
+if [[ -z "$port" ]]; then
+	fatal "No port specified"
+fi
+
+message "Allow Deluge incoming port ${port} on UFW"
+setup_run sudo tee /etc/ufw/applications.d/deluge.conf <<-EOF
+	$(signature)
+
+	[Deluge]
+	title=Deluge BitTorrent Client
+	description=Active port for incoming connections
+	ports=$port
+EOF
+try sudo ufw reload
+sudo ufw allow Deluge

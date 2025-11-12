@@ -1,0 +1,25 @@
+#!/bin/bash
+# https://ubuntu.com/tutorials/configure-ssh-2fa
+
+sudo apt install --mark-auto libpam-google-authenticator
+
+sudo cp /etc/pam.d/sshd{,.$(date '+%Y%m%d%H%M%S').bak
+sudo tee -a /etc/pam.d/sshd <<-EOF
+
+	# Manually added by Rodrigo
+	# See seten/ssh-2fa-totp and https://ubuntu.com/tutorials/configure-ssh-2fa
+	auth required pam_google_authenticator.so nullok
+	auth required pam_permit.so
+
+EOF
+#The nullok word at the end of the last line tells the PAM that this authentication
+# method is optional. This allows users without an OATH-TOTP token to still log in
+# just using their SSH key. Once all users have an OATH-TOTP token, you can remove
+# nullok from this line to make MFA mandatory. The second line with pam_permit.so
+# is required to allow authentication if a user doesn’t use an MFA token to log in.
+# When logging in, each method needs a SUCCESS to allow authentication. If a user
+# doesn’t use the MFA auth tool, utilizing the nullok option returns an IGNORE for
+# the interactive keyboard authentication. pam_permit.so then returns SUCCESS and
+# allows authentication to proceed.
+
+sudo systemctl restart sshd.service

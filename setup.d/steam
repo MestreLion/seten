@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Copyright (C) 2025 Rodrigo Silva (MestreLion) <linux@rodrigosilva.com>
+# License: GPLv3 or later. See <http://www.gnu.org/licenses/gpl.html>
+# -----------------------------------------------------------------------------
+
+DESCRIPTION='Steam tweaks'
+ARGS=''
+
+setuplib=${SETUP_LIB_PATH:-"$(dirname "$(readlink -f "$0")")"/../setuplib}
+# shellcheck source=../setuplib
+if [[ -r "$setuplib" ]]; then source "$setuplib"; else
+	echo "Setup library not found: $setuplib" >&2; exit 1;
+fi
+# -----------------------------------------------------------------------------
+
+
+# Fix scaling (tiny UI/font/etc)
+# 2 options:
+# https://askubuntu.com/questions/1229960
+# env GDK_SCALE=1.25 steam
+# or
+# steam -forcedesktopscaling 1.25
+# both approaches require manually editing the ~/.local/share/applications/steam.desktop
+# as Exec entry is hardcoded to /usr/games/steam
+# (or edit /usr/games/steam itself)
